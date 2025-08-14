@@ -43,6 +43,6 @@
     "solid-js": "^1.9.5",
     "solid-toast": "^0.5.0",
     "solidjs-personal-website": "file:",
-    "sweetalert2": "^11.17.2"
+    "sweetalert2": "^11.22.4"
   }
 }
