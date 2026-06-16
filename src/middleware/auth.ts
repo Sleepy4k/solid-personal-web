@@ -7,7 +7,8 @@ export async function adminAuthMW(event: FetchEvent) {
   const pathname = new URL(rawUrl, "http://localhost").pathname;
   if (!pathname.startsWith("/dashboard")) return;
 
-  const cookie = event.request.headers.get("cookie");
+  const headers = event.request.headers as any;
+  const cookie = typeof headers.get === "function" ? headers.get("cookie") : headers["cookie"];
   const session = await getSessionFromCookie(cookie);
 
   if (!session) {
