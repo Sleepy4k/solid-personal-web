@@ -8,16 +8,25 @@ export default defineConfig(({ command }) => {
     define: command === "build" ? { "import.meta.env.DEV": "false" } : {},
     plugins: [
       solidStart({
-        middleware: "./src/middleware/index.ts"
+        middleware: "./src/middleware/index.ts",
       }),
       tailwindcss(),
       nitro({
         routeRules: {
-          "/": { headers: { "Cache-Control": "public, max-age=300, stale-while-revalidate=3600" } },
-          "/dashboard/**": { headers: { "Cache-Control": "private, no-store" } },
-          "/uploads/**": { headers: { "Cache-Control": "public, max-age=31536000, immutable" } }
+          "/": {
+            headers: {
+              "Cache-Control":
+                "public, max-age=300, stale-while-revalidate=3600",
+            },
+          },
+          "/dashboard/**": {
+            headers: { "Cache-Control": "private, no-store" },
+          },
+          "/uploads/**": {
+            headers: { "Cache-Control": "public, max-age=31536000, immutable" },
+          },
         }
-      })
-    ]
+      }),
+    ],
   };
 });
