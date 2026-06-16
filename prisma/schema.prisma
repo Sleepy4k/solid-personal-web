@@ -1,0 +1,311 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ──────────────────────────────────────────
+// AUTH
+// ──────────────────────────────────────────
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String
+  createdAt DateTime  @default(now()) @map("created_at")
+  sessions  Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ──────────────────────────────────────────
+// PROFILE (5NF: links separated)
+// ──────────────────────────────────────────
+
+model Profile {
+  id        String        @id @default(cuid())
+  name      String
+  title     String
+  bio       String        @db.Text
+  email     String
+  phone     String?
+  location  String?
+  avatarId  String?       @unique @map("avatar_id")
+  resumeId  String?       @unique @map("resume_id")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  avatar    Asset?        @relation("ProfileAvatar", fields: [avatarId], references: [id])
+  resume    Asset?        @relation("ProfileResume", fields: [resumeId], references: [id])
+  links     ProfileLink[]
+
+  @@map("profiles")
+}
+
+model ProfileLink {
+  id        String  @id @default(cuid())
+  profileId String  @map("profile_id")
+  platform  String
+  url       String
+  label     String?
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, platform])
+  @@index([profileId])
+  @@map("profile_links")
+}
+
+// ──────────────────────────────────────────
+// EDUCATION (5NF: achievements separated)
+// ──────────────────────────────────────────
+
+model Education {
+  id           String                 @id @default(cuid())
+  institution  String
+  degree       String
+  field        String
+  startDate    DateTime               @db.Date @map("start_date")
+  endDate      DateTime?              @db.Date @map("end_date")
+  gpa          String?
+  description  String?                @db.Text
+  order        Int                    @default(0)
+  logoId       String?                @map("logo_id")
+  logo         Asset?                 @relation("EducationLogo", fields: [logoId], references: [id])
+  achievements EducationAchievement[]
+
+  @@index([order])
+  @@map("educations")
+}
+
+model EducationAchievement {
+  id          String    @id @default(cuid())
+  educationId String    @map("education_id")
+  title       String
+  order       Int       @default(0)
+  education   Education @relation(fields: [educationId], references: [id], onDelete: Cascade)
+
+  @@index([educationId, order])
+  @@map("education_achievements")
+}
+
+// ──────────────────────────────────────────
+// TECHNOLOGY (shared lookup, 5NF)
+// ──────────────────────────────────────────
+
+model Technology {
+  id          String                 @id @default(cuid())
+  name        String                 @unique
+  icon        String?
+  projects    ProjectTechnology[]
+  experiences ExperienceTechnology[]
+
+  @@map("technologies")
+}
+
+// ──────────────────────────────────────────
+// PROJECTS (5NF: tech and images separated)
+// ──────────────────────────────────────────
+
+model Project {
+  id           String              @id @default(cuid())
+  title        String
+  description  String              @db.Text
+  demoUrl      String?             @map("demo_url")
+  repoUrl      String?             @map("repo_url")
+  featured     Boolean             @default(false)
+  order        Int                 @default(0)
+  startDate    DateTime?           @db.Date @map("start_date")
+  endDate      DateTime?           @db.Date @map("end_date")
+  status       ProjectStatus       @default(COMPLETED)
+  coverId      String?             @map("cover_id")
+  cover        Asset?              @relation("ProjectCover", fields: [coverId], references: [id])
+  technologies ProjectTechnology[]
+  images       ProjectImage[]
+
+  @@index([featured, order])
+  @@index([status])
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+model ProjectTechnology {
+  projectId    String     @map("project_id")
+  technologyId String     @map("technology_id")
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  technology   Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, technologyId])
+  @@index([technologyId])
+  @@map("project_technologies")
+}
+
+model ProjectImage {
+  id        String  @id @default(cuid())
+  projectId String  @map("project_id")
+  assetId   String  @map("asset_id")
+  order     Int     @default(0)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  asset     Asset   @relation("ProjectImage", fields: [assetId], references: [id])
+
+  @@unique([projectId, assetId])
+  @@index([projectId, order])
+  @@map("project_images")
+}
+
+// ──────────────────────────────────────────
+// EXPERIENCE (5NF: responsibilities/tech separated)
+// ──────────────────────────────────────────
+
+model Experience {
+  id               String                    @id @default(cuid())
+  company          String
+  position         String
+  location         String?
+  startDate        DateTime                  @db.Date @map("start_date")
+  endDate          DateTime?                 @db.Date @map("end_date")
+  current          Boolean                   @default(false)
+  description      String?                   @db.Text
+  order            Int                       @default(0)
+  logoId           String?                   @map("logo_id")
+  logo             Asset?                    @relation("ExperienceLogo", fields: [logoId], references: [id])
+  responsibilities ExperienceResponsibility[]
+  technologies     ExperienceTechnology[]
+
+  @@index([order])
+  @@index([current])
+  @@map("experiences")
+}
+
+model ExperienceResponsibility {
+  id           String     @id @default(cuid())
+  experienceId String     @map("experience_id")
+  description  String
+  order        Int        @default(0)
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  @@index([experienceId, order])
+  @@map("experience_responsibilities")
+}
+
+model ExperienceTechnology {
+  experienceId String     @map("experience_id")
+  technologyId String     @map("technology_id")
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  technology   Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+
+  @@id([experienceId, technologyId])
+  @@index([technologyId])
+  @@map("experience_technologies")
+}
+
+// ──────────────────────────────────────────
+// VOLUNTEERING (5NF: impacts separated)
+// ──────────────────────────────────────────
+
+model Volunteering {
+  id           String               @id @default(cuid())
+  organization String
+  role         String
+  location     String?
+  startDate    DateTime             @db.Date @map("start_date")
+  endDate      DateTime?            @db.Date @map("end_date")
+  current      Boolean              @default(false)
+  description  String?              @db.Text
+  order        Int                  @default(0)
+  logoId       String?              @map("logo_id")
+  logo         Asset?               @relation("VolunteeringLogo", fields: [logoId], references: [id])
+  impacts      VolunteeringImpact[]
+
+  @@index([order])
+  @@map("volunteerings")
+}
+
+model VolunteeringImpact {
+  id             String       @id @default(cuid())
+  volunteeringId String       @map("volunteering_id")
+  description    String
+  order          Int          @default(0)
+  volunteering   Volunteering @relation(fields: [volunteeringId], references: [id], onDelete: Cascade)
+
+  @@index([volunteeringId, order])
+  @@map("volunteering_impacts")
+}
+
+// ──────────────────────────────────────────
+// ASSETS (unified media table)
+// ──────────────────────────────────────────
+
+model Asset {
+  id        String   @id @default(cuid())
+  filename  String
+  path      String   @unique
+  mimeType  String   @map("mime_type")
+  size      Int
+  width     Int?
+  height    Int?
+  alt       String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  profileAvatar     Profile?       @relation("ProfileAvatar")
+  profileResume     Profile?       @relation("ProfileResume")
+  educationLogos    Education[]    @relation("EducationLogo")
+  experienceLogos   Experience[]   @relation("ExperienceLogo")
+  volunteeringLogos Volunteering[] @relation("VolunteeringLogo")
+  projectCovers     Project[]      @relation("ProjectCover")
+  projectImages     ProjectImage[] @relation("ProjectImage")
+
+  @@index([mimeType])
+  @@index([createdAt])
+  @@map("assets")
+}
+
+// ──────────────────────────────────────────
+// CONTACT MESSAGES
+// ──────────────────────────────────────────
+
+model Contact {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("contacts")
+}
+
+// ──────────────────────────────────────────
+// GITHUB STATS CACHE
+// ──────────────────────────────────────────
+
+model GithubCache {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  data      Json
+  fetchedAt DateTime @default(now()) @map("fetched_at")
+
+  @@index([fetchedAt])
+  @@map("github_cache")
+}
