@@ -1,0 +1,287 @@
+@import "tailwindcss";
+
+/* ── Runtime theme tokens (cascade-safe for dark mode) ── */
+:root,
+[data-theme="light"] {
+  --c-primary: #ff6b00;
+  --c-primary-dark: #e55a00;
+  --c-primary-light: #ff8c33;
+  --c-bg: #ffffff;
+  --c-bg-alt: #f9f9f9;
+  --c-text: #111111;
+  --c-text-muted: #666666;
+  --c-border: #e5e5e5;
+  --c-card: #ffffff;
+  --c-overlay: rgba(0, 0, 0, 0.5);
+  --scrollbar-thumb: #d1d1d1;
+  --scrollbar-thumb-hover: #aaaaaa;
+  --scrollbar-track: #f5f5f5;
+  --c-input-bg: #ffffff;
+}
+
+[data-theme="dark"] {
+  --c-bg: #0e0e0e;
+  --c-bg-alt: #1a1a1a;
+  --c-text: #f0f0f0;
+  --c-text-muted: #9a9a9a;
+  --c-border: #2a2a2a;
+  --c-card: #1a1a1a;
+  --c-overlay: rgba(0, 0, 0, 0.7);
+  --scrollbar-thumb: #444444;
+  --scrollbar-thumb-hover: #666666;
+  --scrollbar-track: #1a1a1a;
+  --c-input-bg: #1a1a1a;
+}
+
+/* Expose tokens to Tailwind inline (dynamic at runtime) */
+@theme inline {
+  --color-primary: var(--c-primary);
+  --color-primary-dark: var(--c-primary-dark);
+  --color-primary-light: var(--c-primary-light);
+  --radius-button: 12px;
+  --radius-card: 16px;
+  --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+/* ── Custom form elements — no browser default styling ── */
+input,
+textarea,
+select {
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  border-color: var(--c-border);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--c-text-muted);
+}
+
+/* Remove browser default select arrow and appearance */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: none;
+}
+
+/* Date input — override dark browser default */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="month"] {
+  color-scheme: light;
+}
+
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="datetime-local"],
+[data-theme="dark"] input[type="time"],
+[data-theme="dark"] input[type="month"] {
+  color-scheme: dark;
+}
+
+/* select option dark mode */
+[data-theme="dark"] select option {
+  background-color: var(--c-bg-alt);
+  color: var(--c-text);
+}
+
+/* ── Dark mode global overrides ── */
+[data-theme="dark"] body {
+  background-color: var(--c-bg);
+  color: var(--c-text);
+}
+
+[data-theme="dark"] section {
+  background-color: var(--c-bg);
+}
+
+/* Catch any remaining hardcoded light colors */
+[data-theme="dark"] .bg-white {
+  background-color: var(--c-card) !important;
+}
+
+[data-theme="dark"] [class*="bg-[#f9f9f9]"] {
+  background-color: var(--c-bg-alt) !important;
+}
+
+[data-theme="dark"] [class*="bg-[#f5f6fa]"] {
+  background-color: var(--c-bg) !important;
+}
+
+[data-theme="dark"] [class*="text-[#111111]"] {
+  color: var(--c-text) !important;
+}
+
+[data-theme="dark"] [class*="text-[#333333]"] {
+  color: var(--c-text) !important;
+}
+
+[data-theme="dark"] [class*="text-[#666666]"] {
+  color: var(--c-text-muted) !important;
+}
+
+[data-theme="dark"] [class*="text-[#999999]"] {
+  color: var(--c-text-muted) !important;
+}
+
+[data-theme="dark"] [class*="text-[#bbbbbb]"] {
+  color: var(--c-text-muted) !important;
+}
+
+[data-theme="dark"] [class*="text-[#cccccc]"] {
+  color: var(--c-text-muted) !important;
+}
+
+[data-theme="dark"] [class*="border-[#e5e5e5]"] {
+  border-color: var(--c-border) !important;
+}
+
+[data-theme="dark"] [class*="hover\:bg-[#f9f9f9]"]:hover {
+  background-color: var(--c-bg-alt) !important;
+}
+
+[data-theme="dark"] header {
+  background: transparent;
+}
+
+[data-theme="dark"] header.scrolled {
+  background: rgba(14, 14, 14, 0.95) !important;
+}
+
+[data-theme="dark"] .card-dark {
+  background-color: var(--c-card);
+  border-color: var(--c-border);
+}
+
+/* Danger button hover fix in dark mode */
+[data-theme="dark"] .hover\:bg-red-50:hover {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* ── Custom scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* ── NProgress ── */
+#nprogress {
+  pointer-events: none;
+}
+#nprogress .bar {
+  background: var(--c-primary);
+  position: fixed;
+  z-index: 1031;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+}
+#nprogress .peg {
+  display: block;
+  position: absolute;
+  right: 0;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px var(--c-primary), 0 0 5px var(--c-primary);
+  opacity: 1;
+  transform: rotate(3deg) translate(0px, -4px);
+}
+
+/* ── Skeleton ── */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+[data-theme="dark"] .skeleton {
+  background: linear-gradient(90deg, #2a2a2a 25%, #333333 50%, #2a2a2a 75%);
+  background-size: 200% 100%;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── GitHub contribution colors ── */
+.contrib-0 { background: #ebedf0; }
+.contrib-1 { background: #ffd4b3; }
+.contrib-2 { background: #ffb380; }
+.contrib-3 { background: #ff8c40; }
+.contrib-4 { background: #ff6b00; }
+
+[data-theme="dark"] .contrib-0 { background: #2d333b; }
+
+/* ── GSAP animation helpers ── */
+.gsap-hidden {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+/* ── Base ── */
+html {
+  scroll-behavior: smooth;
+  color-scheme: light dark;
+}
+
+body {
+  font-family: var(--font-sans, "Inter", "Segoe UI", system-ui, sans-serif);
+  color: var(--c-text);
+  background: var(--c-bg);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+}
+
+/* ── Responsive utilities ── */
+@media (max-width: 768px) {
+  .max-w-6xl {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* ── Modal animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+
+/* Hero section primary gradient background */
+#hero {
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.07) 0%, var(--c-bg) 60%, var(--c-bg) 100%);
+}
+[data-theme="dark"] #hero {
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.03) 0%, var(--c-bg) 50%, var(--c-bg) 100%);
+}
