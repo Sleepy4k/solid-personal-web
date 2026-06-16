@@ -1,0 +1,9 @@
+{
+  "agent_id": "claude",
+  "stack": "solid-start",
+  "settings": {
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "system_instructions": "Strictly follow the SKILL.md documents in solid-start/.claude/skills/ when writing code."
+  }
+}
