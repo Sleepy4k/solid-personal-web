@@ -1,32 +1,60 @@
-import { defineConfig } from "vite";
-import { nitroV2Plugin as nitro } from "@solidjs/vite-plugin-nitro-2";
+import { defineConfig, loadEnv } from "vite";
 import { solidStart } from "@solidjs/start/config";
 import tailwindcss from "@tailwindcss/vite";
 
-export default defineConfig(({ command }) => {
+process.noDeprecation = true;
+
+const SERVER_ENV_KEYS = [
+  "JWT_SECRET",
+  "DATABASE_URL",
+  "ADMIN_EMAIL",
+  "ADMIN_PASSWORD",
+  "GITHUB_USERNAME",
+  "GITHUB_TOKEN",
+  "NODE_ENV",
+] as const;
+
+export default defineConfig(({ command, mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  const ssrDefine = Object.fromEntries(
+    SERVER_ENV_KEYS.map((key) => [
+      `process.env.${key}`,
+      JSON.stringify(env[key] ?? process.env[key] ?? ""),
+    ]),
+  );
+
   return {
+    server: {
+      host: true,
+      port: 5173,
+    },
+    build: {
+      target: "es2020",
+      minify: "terser",
+      sourcemap: false,
+      reportCompressedSize: false,
+      chunkSizeWarningLimit: 1000,
+      terserOptions: {
+        format: { comments: false },
+        compress: {
+          drop_debugger: true,
+          passes: 2,
+          pure_getters: true,
+        },
+        mangle: true,
+      },
+    },
     define: command === "build" ? { "import.meta.env.DEV": "false" } : {},
     plugins: [
       solidStart({
+        ssr: true,
         middleware: "./src/middleware/index.ts",
       }),
       tailwindcss(),
-      nitro({
-        routeRules: {
-          "/": {
-            headers: {
-              "Cache-Control":
-                "public, max-age=300, stale-while-revalidate=3600",
-            },
-          },
-          "/dashboard/**": {
-            headers: { "Cache-Control": "private, no-store" },
-          },
-          "/uploads/**": {
-            headers: { "Cache-Control": "public, max-age=31536000, immutable" },
-          },
-        }
-      }),
     ],
+    optimizeDeps: { exclude: ["nprogress"] },
+    environments: {
+      ssr: { define: ssrDefine },
+    },
   };
 });
