@@ -55,10 +55,10 @@ function EduForm(props: {
           <Input name="gpa" value={props.item?.gpa ?? ""} placeholder="3.75" />
         </FormField>
         <FormField label="Tanggal Mulai" name="startDate" required>
-          <Input type="date" name="startDate" value={props.item?.startDate?.toISOString().slice(0, 10) ?? ""} required />
+          <Input type="date" name="startDate" value={props.item?.startDate ? new Date(props.item.startDate).toISOString().slice(0, 10) : ""} required />
         </FormField>
         <FormField label="Tanggal Selesai" name="endDate" hint="Kosongkan jika masih berlangsung">
-          <Input type="date" name="endDate" value={props.item?.endDate?.toISOString().slice(0, 10) ?? ""} />
+          <Input type="date" name="endDate" value={props.item?.endDate ? new Date(props.item.endDate).toISOString().slice(0, 10) : ""} />
         </FormField>
       </div>
 
@@ -168,8 +168,8 @@ export default function EducationPage() {
                           <p class="font-semibold text-[var(--c-text)] text-sm">{edu.institution}</p>
                           <p class="text-xs text-[#ff6b00] mt-0.5">{edu.degree} - {edu.field}</p>
                           <p class="text-xs text-[var(--c-text-muted)] mt-0.5">
-                            {edu.startDate.toLocaleDateString("id-ID", { year: "numeric", month: "short" })} -
-                            {edu.endDate ? edu.endDate.toLocaleDateString("id-ID", { year: "numeric", month: "short" }) : " Sekarang"}
+                            {new Date(edu.startDate).toLocaleDateString("id-ID", { year: "numeric", month: "short" })} -
+                            {edu.endDate ? new Date(edu.endDate).toLocaleDateString("id-ID", { year: "numeric", month: "short" }) : " Sekarang"}
                             {edu.gpa && <span class="ml-2 font-medium">IPK {edu.gpa}</span>}
                           </p>
                         </div>

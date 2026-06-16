@@ -50,10 +50,10 @@ function VolForm(props: { item?: Awaited<ReturnType<typeof getVolunteerings>>[nu
           <Input type="number" name="order" value={props.item?.order ?? 0} />
         </FormField>
         <FormField label="Tanggal Mulai" name="startDate" required>
-          <Input type="date" name="startDate" value={props.item?.startDate?.toISOString().slice(0, 10) ?? ""} required />
+          <Input type="date" name="startDate" value={props.item?.startDate ? new Date(props.item.startDate).toISOString().slice(0, 10) : ""} required />
         </FormField>
         <FormField label="Tanggal Selesai" name="endDate" hint="Kosongkan jika masih aktif">
-          <Input type="date" name="endDate" value={props.item?.endDate?.toISOString().slice(0, 10) ?? ""} />
+          <Input type="date" name="endDate" value={props.item?.endDate ? new Date(props.item.endDate).toISOString().slice(0, 10) : ""} />
         </FormField>
       </div>
 
@@ -169,8 +169,8 @@ export default function VolunteeringPage() {
                           <p class="text-xs text-[#10b981] mt-0.5">{vol.organization}</p>
                           <div class="flex items-center gap-3 mt-0.5">
                             <p class="text-xs text-[var(--c-text-muted)]">
-                              {vol.startDate.toLocaleDateString("id-ID", { year: "numeric", month: "short" })} -
-                              {vol.endDate ? vol.endDate.toLocaleDateString("id-ID", { year: "numeric", month: "short" }) : " Sekarang"}
+                              {new Date(vol.startDate).toLocaleDateString("id-ID", { year: "numeric", month: "short" })} -
+                              {vol.endDate ? new Date(vol.endDate).toLocaleDateString("id-ID", { year: "numeric", month: "short" }) : " Sekarang"}
                             </p>
                             <Show when={vol.location}>
                               <span class="flex items-center gap-0.5 text-xs text-[var(--c-text-muted)]">

@@ -52,10 +52,10 @@ function ExpForm(props: { item?: Awaited<ReturnType<typeof getExperiences>>[numb
           <Input type="number" name="order" value={props.item?.order ?? 0} />
         </FormField>
         <FormField label="Tanggal Mulai" name="startDate" required>
-          <Input type="date" name="startDate" value={props.item?.startDate?.toISOString().slice(0, 10) ?? ""} required />
+          <Input type="date" name="startDate" value={props.item?.startDate ? new Date(props.item.startDate).toISOString().slice(0, 10) : ""} required />
         </FormField>
         <FormField label="Tanggal Selesai" name="endDate" hint="Kosongkan jika masih aktif">
-          <Input type="date" name="endDate" value={props.item?.endDate?.toISOString().slice(0, 10) ?? ""} />
+          <Input type="date" name="endDate" value={props.item?.endDate ? new Date(props.item.endDate).toISOString().slice(0, 10) : ""} />
         </FormField>
       </div>
 
@@ -176,8 +176,8 @@ export default function ExperiencePage() {
                           <p class="text-xs text-[#ff6b00] mt-0.5">{exp.company}</p>
                           <div class="flex items-center gap-3 mt-0.5">
                             <p class="text-xs text-[var(--c-text-muted)]">
-                              {exp.startDate.toLocaleDateString("id-ID", { year: "numeric", month: "short" })} -
-                              {exp.endDate ? exp.endDate.toLocaleDateString("id-ID", { year: "numeric", month: "short" }) : " Sekarang"}
+                              {new Date(exp.startDate).toLocaleDateString("id-ID", { year: "numeric", month: "short" })} -
+                              {exp.endDate ? new Date(exp.endDate).toLocaleDateString("id-ID", { year: "numeric", month: "short" }) : " Sekarang"}
                             </p>
                             <Show when={exp.location}>
                               <span class="flex items-center gap-0.5 text-xs text-[var(--c-text-muted)]">

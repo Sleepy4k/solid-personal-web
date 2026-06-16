@@ -62,7 +62,7 @@ export default function EducationSection(props: Props) {
                         <h3 class="font-semibold text-lg text-[var(--c-text)]">{edu.institution}</h3>
                         <p class="text-[#ff6b00] font-medium">{edu.degree} - {edu.field}</p>
                         <p class="text-sm text-[var(--c-text-muted)] mt-1">
-                          <time dateTime={edu.startDate?.toISOString()}>{formatDate(edu.startDate)}</time>
+                          <time dateTime={edu.startDate ? new Date(edu.startDate).toISOString() : undefined}>{formatDate(edu.startDate)}</time>
                           {" - "}
                           <time>{formatDate(edu.endDate)}</time>
                           {edu.gpa && <span class="ml-3 font-medium">IPK: {edu.gpa}</span>}
