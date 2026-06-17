@@ -1,4 +1,4 @@
-import { createAsync, type RouteDefinition } from "@solidjs/router";
+import { createAsync, useLocation, type RouteDefinition } from "@solidjs/router";
 import { Title, Meta, Link } from "@solidjs/meta";
 import { Suspense, lazy } from "solid-js";
 import { getPortfolioData } from "~/server/db/portfolio";
@@ -21,6 +21,7 @@ export const route: RouteDefinition = {
 
 export default function Home() {
   const data = createAsync(() => getPortfolioData());
+  const location = useLocation();
 
   const title = () =>
     data()?.profile?.name
@@ -46,20 +47,7 @@ export default function Home() {
       <Meta name="twitter:card" content="summary" />
       <Meta name="twitter:title" content={title()} />
       <Meta name="twitter:description" content={description()} />
-      <Link rel="canonical" href={typeof window !== "undefined" ? window.location.href : "/"} />
-
-      <script
-        type="application/ld+json"
-        innerHTML={JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Person",
-          name: data()?.profile?.name,
-          jobTitle: data()?.profile?.title,
-          email: data()?.profile?.email,
-          description: data()?.profile?.bio,
-          url: typeof window !== "undefined" ? window.location.origin : ""
-        })}
-      />
+      <Link rel="canonical" href={location.pathname} />
 
       <Header />
 

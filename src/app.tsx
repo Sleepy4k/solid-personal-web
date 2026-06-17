@@ -1,18 +1,27 @@
 import { Router } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
 import { MetaProvider } from "@solidjs/meta";
-import { Suspense, createEffect } from "solid-js";
+import { Suspense, createEffect, createSignal, onMount } from "solid-js";
 import { useIsRouting } from "@solidjs/router";
-import { NProgress, configureNProgress } from "~/lib/client/nprogress";
 import "./app.css";
-
-configureNProgress();
 
 function NavProgress() {
   const isRouting = useIsRouting();
-  createEffect(() => {
-    isRouting() ? NProgress.start() : NProgress.done();
+  const [np, setNp] = createSignal<{ start(): void; done(): void } | null>(null);
+
+  onMount(() => {
+    import("~/lib/client/nprogress").then(({ NProgress, configureNProgress }) => {
+      configureNProgress();
+      setNp(NProgress);
+    });
   });
+
+  createEffect(() => {
+    const progress = np();
+    if (!progress) return;
+    isRouting() ? progress.start() : progress.done();
+  });
+
   return null;
 }
 
