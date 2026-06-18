@@ -1,20 +1,17 @@
 "use server";
 import { unlink, mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { db } from "~/server/db/client";
+import { existsSync } from "node:fs";
 
 function resolveUploadDir(): string {
   if (process.env.UPLOAD_DIR) {
     return resolve(process.env.UPLOAD_DIR);
   }
-  try {
-    const thisFile = fileURLToPath(import.meta.url);
-    return join(thisFile, "client", "uploads");
-  } catch {
-    return join(process.cwd(), "public", "uploads");
-  }
+  const prodClientDir = join(process.cwd(), "dist", "client");
+  const baseDir = existsSync(prodClientDir) ? prodClientDir : join(process.cwd(), "public");
+  return join(baseDir, "uploads");
 }
 
 const UPLOAD_DIR = resolveUploadDir();
