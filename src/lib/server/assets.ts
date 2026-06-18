@@ -1,15 +1,30 @@
 "use server";
-import { unlink } from "node:fs/promises";
-import { join } from "node:path";
+import { unlink, mkdir, writeFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { db } from "~/server/db/client";
-import fs from "fs/promises";
 
-const UPLOAD_DIR = join(process.cwd(), "public", "uploads");
+function resolveUploadDir(): string {
+  if (process.env.UPLOAD_DIR) {
+    return resolve(process.env.UPLOAD_DIR);
+  }
+  try {
+    const thisFile = fileURLToPath(import.meta.url);
+    return join(thisFile, "client", "uploads");
+  } catch {
+    return join(process.cwd(), "public", "uploads");
+  }
+}
+
+const UPLOAD_DIR = resolveUploadDir();
+
+await mkdir(UPLOAD_DIR, { recursive: true });
+
 const MAX_SIZE = 10 * 1024 * 1024;
 const ALLOWED = new Set([
   "image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml",
-  "video/mp4", "video/webm", "application/pdf"
+  "video/mp4", "video/webm", "application/pdf",
 ]);
 
 export async function uploadAsset(file: File) {
@@ -19,7 +34,7 @@ export async function uploadAsset(file: File) {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
   const filename = `${randomUUID()}.${ext}`;
 
-  await fs.writeFile(join(UPLOAD_DIR, filename), Buffer.from(await file.arrayBuffer()));
+  await writeFile(join(UPLOAD_DIR, filename), Buffer.from(await file.arrayBuffer()));
 
   return db.asset.create({
     data: {
@@ -27,15 +42,17 @@ export async function uploadAsset(file: File) {
       path: `/uploads/${filename}`,
       mimeType: file.type,
       size: file.size,
-      alt: file.name.replace(/\.[^.]+$/, "")
-    }
+      alt: file.name.replace(/\.[^.]+$/, ""),
+    },
   });
 }
 
 export async function deleteAsset(id: string) {
   const asset = await db.asset.findUnique({ where: { id } });
   if (!asset) return;
-  const full = join(process.cwd(), "public", asset.path);
+
+  const relativePath = asset.path.replace(/^\//, "");
+  const full = join(UPLOAD_DIR, "..", relativePath);
   await unlink(full).catch(() => {});
   await db.asset.delete({ where: { id } });
 }

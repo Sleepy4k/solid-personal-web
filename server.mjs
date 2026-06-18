@@ -1,14 +1,17 @@
 import { sendNodeResponse, NodeRequest } from "srvx/node";
 import { createServer } from "node:http";
-import { readFile, stat } from "node:fs/promises";
+import { readFile, stat, mkdir } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { join, dirname, extname } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CLIENT_DIR = join(__dirname, "dist/client");
+const UPLOADS_DIR = join(CLIENT_DIR, "uploads");
 const entryUrl = pathToFileURL(
   join(__dirname, "dist/server/entry-server.js"),
 ).href;
+
+await mkdir(UPLOADS_DIR, { recursive: true });
 
 const { default: handler } = await import(entryUrl);
 const fetchHandler = handler.fetch ?? ((req) => handler.request(req));
