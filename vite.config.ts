@@ -28,6 +28,9 @@ export default defineConfig(({ command, mode }) => {
       host: true,
       port: 5173,
     },
+    resolve: {
+      dedupe: ["solid-js", "@solidjs/router", "@solidjs/meta", "solid-js/web"],
+    },
     build: {
       target: "es2020",
       minify: "terser",
@@ -44,7 +47,13 @@ export default defineConfig(({ command, mode }) => {
         mangle: true,
       },
     },
-    define: command === "build" ? { "import.meta.env.DEV": "false" } : {},
+    define:
+      command === "build"
+        ? {
+            "import.meta.env.DEV": "false",
+            "import.meta.env.START_DEV_OVERLAY": "false",
+          }
+        : {},
     plugins: [
       solidStart({
         ssr: true,
@@ -54,7 +63,14 @@ export default defineConfig(({ command, mode }) => {
     ],
     optimizeDeps: { exclude: ["nprogress"] },
     environments: {
-      ssr: { define: ssrDefine },
+      ssr: {
+        define: {
+          ...ssrDefine,
+          "import.meta.env.DEV": "false",
+          "import.meta.env.START_DEV_OVERLAY": "false",
+        },
+        noExternal: ["nprogress"],
+      },
     },
   };
 });
