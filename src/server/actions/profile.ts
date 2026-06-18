@@ -6,15 +6,20 @@ import { profileSchema } from "~/lib/shared/validation";
 
 export const saveProfile = action(async (form: FormData) => {
   "use server";
+  const getFileOrString = (val: FormDataEntryValue | null) => {
+    if (!val || val instanceof File) return undefined;
+    return String(val) || undefined;
+  };
+
   const raw = {
     name: String(form.get("name") ?? ""),
     title: String(form.get("title") ?? ""),
     bio: String(form.get("bio") ?? ""),
     email: String(form.get("email") ?? ""),
-    phone: String(form.get("phone") ?? "") || undefined,
-    location: String(form.get("location") ?? "") || undefined,
-    avatarId: String(form.get("avatarId") ?? "") || undefined,
-    resumeId: String(form.get("resumeId") ?? "") || undefined
+    phone: getFileOrString(form.get("phone")),
+    location: getFileOrString(form.get("location")),
+    avatarId: getFileOrString(form.get("avatarId")),
+    resumeId: getFileOrString(form.get("resumeId"))
   };
 
   const result = profileSchema.safeParse(raw);

@@ -1,11 +1,11 @@
 import { createAsync, useAction, type RouteDefinition } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
-import { createSignal, For, Suspense } from "solid-js";
+import { createSignal, Index, Suspense } from "solid-js";
 import { getProfile } from "~/server/db/dashboard";
 import { saveProfile } from "~/server/actions/profile";
 import DashboardLayout from "~/features/dashboard/Layout";
 import FileUpload from "~/features/dashboard/FileUpload";
-import { FormField, Input, Textarea, SaveStatus } from "~/components/form/FormField";
+import { FormField, Input, Textarea, Select, SaveStatus } from "~/components/form/FormField";
 import { Button } from "~/components/ui/Button";
 import { Skeleton } from "~/components/ui/Skeleton";
 import { TbOutlineUser, TbOutlinePlus, TbOutlineTrash } from "solid-icons/tb";
@@ -110,37 +110,46 @@ export default function ProfilePage() {
                   <TbOutlinePlus size={13} />Tambah
                 </Button>
               </div>
-              <For each={links()}>
+              <Index each={links()}>
                 {(link, i) => (
                   <div class="flex gap-2 items-start">
-                    <Input
-                      placeholder="Platform (github)"
-                      value={link.platform}
-                      onInput={e => setLinks(l => l.map((x, j) => j === i() ? { ...x, platform: (e.target as HTMLInputElement).value } : x))}
-                      class="w-32"
-                    />
+                    <Select
+                      value={link().platform}
+                      onChange={e => setLinks(l => l.map((x, j) => j === i ? { ...x, platform: (e.target as HTMLSelectElement).value } : x))}
+                      class="w-36"
+                    >
+                      <option value="">Platform</option>
+                      <option value="github">GitHub</option>
+                      <option value="gitlab">GitLab</option>
+                      <option value="linkedin">LinkedIn</option>
+                      <option value="twitter">Twitter / X</option>
+                      <option value="instagram">Instagram</option>
+                      <option value="facebook">Facebook</option>
+                      <option value="youtube">YouTube</option>
+                      <option value="website">Website</option>
+                    </Select>
                     <Input
                       placeholder="URL"
-                      value={link.url}
-                      onInput={e => setLinks(l => l.map((x, j) => j === i() ? { ...x, url: (e.target as HTMLInputElement).value } : x))}
+                      value={link().url}
+                      onInput={e => setLinks(l => l.map((x, j) => j === i ? { ...x, url: (e.target as HTMLInputElement).value } : x))}
                     />
                     <Input
                       placeholder="Label"
-                      value={link.label}
-                      onInput={e => setLinks(l => l.map((x, j) => j === i() ? { ...x, label: (e.target as HTMLInputElement).value } : x))}
+                      value={link().label}
+                      onInput={e => setLinks(l => l.map((x, j) => j === i ? { ...x, label: (e.target as HTMLInputElement).value } : x))}
                       class="w-28"
                     />
                     <button
                       type="button"
                       class="mt-2.5 p-1 text-[var(--c-text-muted)] hover:text-red-500 transition-colors shrink-0"
-                      onClick={() => setLinks(l => l.filter((_, j) => j !== i()))}
+                      onClick={() => setLinks(l => l.filter((_, j) => j !== i))}
                       aria-label="Hapus tautan"
                     >
                       <TbOutlineTrash size={15} />
                     </button>
                   </div>
                 )}
-              </For>
+              </Index>
             </div>
 
             <Button type="submit" loading={saveStatus() === "saving"}>Simpan Perubahan</Button>

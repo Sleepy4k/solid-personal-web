@@ -4,6 +4,11 @@ import { getProjects } from "~/server/db/dashboard";
 
 export const saveProject = action(async (form: FormData) => {
   "use server";
+  const getFileOrString = (val: FormDataEntryValue | null) => {
+    if (!val || val instanceof File) return undefined;
+    return String(val) || undefined;
+  };
+
   const id = String(form.get("id") ?? "");
   const techs = JSON.parse(String(form.get("techs") ?? "[]")) as string[];
   const data = {
@@ -14,7 +19,7 @@ export const saveProject = action(async (form: FormData) => {
     featured: form.get("featured") === "true",
     order: Number(form.get("order") ?? 0),
     status: (String(form.get("status") ?? "COMPLETED")) as "IN_PROGRESS" | "COMPLETED" | "ARCHIVED",
-    coverId: String(form.get("coverId") ?? "") || undefined
+    coverId: getFileOrString(form.get("coverId"))
   };
 
   let projId = id;

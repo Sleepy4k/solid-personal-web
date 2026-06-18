@@ -4,6 +4,11 @@ import { getVolunteerings } from "~/server/db/dashboard";
 
 export const saveVolunteering = action(async (form: FormData) => {
   "use server";
+  const getFileOrString = (val: FormDataEntryValue | null) => {
+    if (!val || val instanceof File) return undefined;
+    return String(val) || undefined;
+  };
+
   const id = String(form.get("id") ?? "");
   const impacts = JSON.parse(String(form.get("impacts") ?? "[]")) as string[];
   const data = {
@@ -15,7 +20,7 @@ export const saveVolunteering = action(async (form: FormData) => {
     current: form.get("current") === "true",
     description: String(form.get("description") ?? "") || null,
     order: Number(form.get("order") ?? 0),
-    logoId: String(form.get("logoId") ?? "") || undefined
+    logoId: getFileOrString(form.get("logoId"))
   };
 
   let volId = id;

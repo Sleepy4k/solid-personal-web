@@ -4,6 +4,11 @@ import { getExperiences } from "~/server/db/dashboard";
 
 export const saveExperience = action(async (form: FormData) => {
   "use server";
+  const getFileOrString = (val: FormDataEntryValue | null) => {
+    if (!val || val instanceof File) return undefined;
+    return String(val) || undefined;
+  };
+
   const id = String(form.get("id") ?? "");
   const responsibilities = JSON.parse(String(form.get("responsibilities") ?? "[]")) as string[];
   const techs = JSON.parse(String(form.get("techs") ?? "[]")) as string[];
@@ -16,7 +21,7 @@ export const saveExperience = action(async (form: FormData) => {
     current: form.get("current") === "true",
     description: String(form.get("description") ?? "") || null,
     order: Number(form.get("order") ?? 0),
-    logoId: String(form.get("logoId") ?? "") || undefined
+    logoId: getFileOrString(form.get("logoId"))
   };
 
   let expId = id;
