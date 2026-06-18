@@ -19,7 +19,13 @@ function resolveUploadDir(): string {
 
 const UPLOAD_DIR = resolveUploadDir();
 
-await mkdir(UPLOAD_DIR, { recursive: true });
+let isDirCreated = false;
+
+async function ensureDir() {
+  if (isDirCreated) return;
+  await mkdir(UPLOAD_DIR, { recursive: true });
+  isDirCreated = true;
+}
 
 const MAX_SIZE = 10 * 1024 * 1024;
 const ALLOWED = new Set([
@@ -30,6 +36,8 @@ const ALLOWED = new Set([
 export async function uploadAsset(file: File) {
   if (file.size > MAX_SIZE) throw new Error("File terlalu besar (maks 10MB)");
   if (!ALLOWED.has(file.type)) throw new Error("Tipe file tidak diizinkan");
+
+  await ensureDir();
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
   const filename = `${randomUUID()}.${ext}`;
