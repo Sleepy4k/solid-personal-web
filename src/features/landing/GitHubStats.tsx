@@ -81,7 +81,7 @@ export default function GitHubStatsSection(props: Props) {
 
               <Card class="p-6 overflow-x-auto relative">
                 <p class="text-sm font-medium text-[var(--c-text-muted)] mb-4">
-                  Kontribusi 1 tahun terakhir - {props.stats!.totalContributions.toLocaleString("id-ID")} total
+                  Kontribusi 1 tahun terakhir - {props.stats!.totalContributions.toLocaleString("id-ID")} total kontribusi
                 </p>
                 <div
                   class="flex gap-1 min-w-max pb-2"
@@ -116,8 +116,7 @@ export default function GitHubStatsSection(props: Props) {
                     )}
                   </For>
                 </div>
-                
-                {/* Custom Tooltip */}
+
                 <Show when={hoveredDay()}>
                   {day => (
                     <div

@@ -7,7 +7,6 @@ const NAV = [
   { href: "/experience", label: "Pengalaman" },
   { href: "/projects", label: "Proyek" },
   { href: "/volunteering", label: "Volunter" },
-  { href: "/#contact", label: "Kontak" }
 ];
 
 function getTheme(): "light" | "dark" {
@@ -60,7 +59,6 @@ export default function Header() {
           Portfolio
         </A>
 
-        {/* Desktop nav */}
         <ul class="hidden md:flex items-center gap-6 list-none m-0 p-0" role="list">
           {NAV.map(item => (
             <li>
@@ -75,7 +73,6 @@ export default function Header() {
         </ul>
 
         <div class="flex items-center gap-2">
-          {/* Dark mode toggle */}
           <button
             onClick={toggleTheme}
             aria-label={theme() === "dark" ? "Aktifkan mode terang" : "Aktifkan mode gelap"}
@@ -86,15 +83,6 @@ export default function Header() {
             </Show>
           </button>
 
-          {/* CTA - desktop */}
-          <A
-            href="/#contact"
-            class="hidden md:inline-flex bg-[#ff6b00] text-white text-sm font-medium px-4 py-2 rounded-[12px] hover:bg-[#e55a00] transition-colors"
-          >
-            Hubungi Saya
-          </A>
-
-          {/* Mobile hamburger */}
           <button
             onClick={() => setMenuOpen(o => !o)}
             aria-label={menuOpen() ? "Tutup menu" : "Buka menu"}
@@ -108,7 +96,6 @@ export default function Header() {
         </div>
       </nav>
 
-      {/* Mobile menu */}
       <Show when={menuOpen()}>
         <div
           class="md:hidden border-t border-[var(--c-border)] bg-[var(--c-bg)] px-4 py-4 space-y-1"

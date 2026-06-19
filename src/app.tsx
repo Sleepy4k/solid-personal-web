@@ -5,9 +5,6 @@ import { Suspense, createEffect, createSignal, onMount } from "solid-js";
 import { useIsRouting } from "@solidjs/router";
 import "./app.css";
 
-// NProgress navigation indicator — renders null, side-effects only.
-// createEffect and onMount are both no-ops in SSR (server-only runs).
-// NProgress is loaded lazily after mount so it never executes on server.
 function NavProgress() {
   const isRouting = useIsRouting();
   const [np, setNp] = createSignal<{ start(): void; done(): void } | null>(null);

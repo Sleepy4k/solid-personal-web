@@ -3,7 +3,6 @@ import { getSessionFromCookie } from "~/lib/server/session";
 
 export async function adminAuthMW(event: FetchEvent) {
   const rawUrl = event.request.url;
-  // In some production environments the URL is path-only — always add a base
   const pathname = new URL(rawUrl, "http://localhost").pathname;
   if (!pathname.startsWith("/dashboard")) return;
 

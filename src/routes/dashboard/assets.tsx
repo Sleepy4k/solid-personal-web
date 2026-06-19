@@ -115,7 +115,6 @@ export default function AssetsPage() {
               <For each={assets()}>
                 {asset => (
                   <Card class="overflow-hidden group">
-                    {/* Preview */}
                     <div class="aspect-square relative bg-[var(--c-bg-alt)]">
                       <Show
                         when={asset.mimeType.startsWith("image/")}
@@ -131,7 +130,6 @@ export default function AssetsPage() {
                         <LazyImg src={asset.path} alt={asset.alt ?? asset.filename} class="w-full h-full object-cover" />
                       </Show>
 
-                      {/* Hover overlay */}
                       <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
                         <button
                           type="button"
@@ -155,7 +153,6 @@ export default function AssetsPage() {
                       </div>
                     </div>
 
-                    {/* Info */}
                     <div class="p-2.5">
                       <p class="text-xs font-medium text-[var(--c-text)] truncate">{asset.filename}</p>
                       <p class="text-xs text-[var(--c-text-muted)] mt-0.5">{formatSize(asset.size)}</p>

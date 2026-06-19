@@ -13,7 +13,6 @@ export default createHandler(() => (
           <meta name="robots" content="index, follow" />
           <meta property="og:type" content="website" />
           <meta name="twitter:card" content="summary_large_image" />
-          {/* Prevent dark mode flash — runs before first paint, covered by 'unsafe-inline' */}
           <script innerHTML="(function(){try{var t=localStorage.getItem('theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();" />
           {assets}
         </head>

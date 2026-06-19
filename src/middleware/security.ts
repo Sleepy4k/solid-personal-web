@@ -2,7 +2,6 @@ import { randomBytes } from "node:crypto";
 import type { FetchEvent } from "@solidjs/start/server";
 
 export function securityHeadersMW(event: FetchEvent) {
-  // Nonce stored in locals for future use with controlled inline scripts
   const nonce = randomBytes(16).toString("base64");
   event.locals.cspNonce = nonce;
 
@@ -15,10 +14,6 @@ export function securityHeadersMW(event: FetchEvent) {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      // 'unsafe-inline' is required — SolidStart injects inline hydration scripts
-      // without nonce support in this alpha version. Adding a nonce alongside
-      // 'unsafe-inline' would cause CSP Level 3 browsers to ignore 'unsafe-inline',
-      // breaking hydration. We omit the nonce from script-src intentionally.
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",

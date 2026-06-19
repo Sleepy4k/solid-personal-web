@@ -91,7 +91,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Desktop sidebar — sticky so it stays at viewport top regardless of content height */}
       <aside
         class="hidden md:flex w-60 shrink-0 bg-[var(--c-card)] border-r border-[var(--c-border)] h-screen sticky top-0 flex-col overflow-hidden"
         role="navigation"
@@ -100,7 +99,6 @@ export default function Sidebar() {
         <SidebarContent />
       </aside>
 
-      {/* Mobile top bar */}
       <div class="md:hidden fixed top-0 left-0 right-0 z-50 bg-[var(--c-card)] border-b border-[var(--c-border)] h-14 flex items-center px-4 gap-3">
         <button
           onClick={() => setMobileOpen(o => !o)}
@@ -115,7 +113,6 @@ export default function Sidebar() {
         <span class="font-semibold text-[var(--c-text)] text-sm">Dashboard</span>
       </div>
 
-      {/* Mobile drawer — always mounted, animated via transform */}
       <div
         class={`md:hidden fixed inset-0 z-40 flex transition-all duration-300 ${mobileOpen() ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
         onClick={e => { if (e.target === e.currentTarget) setMobileOpen(false); }}

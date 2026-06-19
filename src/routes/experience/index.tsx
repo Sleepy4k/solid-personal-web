@@ -33,7 +33,6 @@ export default function ExperiencePage() {
   const q = () => searchParams.q ?? "";
   const selectedTech = () => searchParams.tech ?? "all";
 
-  // Debounced local search input state
   const [localSearch, setLocalSearch] = createSignal(q());
   createEffect(() => {
     setLocalSearch(q());
@@ -43,7 +42,6 @@ export default function ExperiencePage() {
     setSearchParams({ q: val || undefined });
   }, 300);
 
-  // Map technologies to Option interface
   const techOptions = () => {
     const list = technologies() ?? [];
     return [
@@ -68,7 +66,6 @@ export default function ExperiencePage() {
             </p>
           </div>
 
-          {/* Search + Filter */}
           <div class="flex flex-col sm:flex-row gap-3 mb-8">
             <div class="relative flex-1">
               <TbOutlineSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)]" size={16} />
@@ -96,7 +93,6 @@ export default function ExperiencePage() {
             </div>
           </div>
 
-          {/* Results list */}
           <Suspense fallback={<ExperienceSection loading />}>
             <Show
               when={(experiences() ?? []).length > 0}

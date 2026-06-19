@@ -19,7 +19,6 @@ export default function ProfilePage() {
   const save = useAction(saveProfile);
   const [saveStatus, setSaveStatus] = createSignal<"idle" | "saving" | "saved" | "error">("idle");
   const [avatarId, setAvatarId] = createSignal<string | null>(null);
-  // Derive initial links from server data; user edits stored separately
   const serverLinks = () =>
     profile()?.links?.map(l => ({ platform: l.platform, url: l.url, label: l.label ?? "" })) ?? [];
   const [linksOverride, setLinksOverride] = createSignal<{ platform: string; url: string; label: string }[] | null>(null);

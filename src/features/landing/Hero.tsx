@@ -30,7 +30,6 @@ export default function Hero(props: Props) {
       class="relative min-h-screen flex items-center pt-16 overflow-hidden"
       aria-label="Pengenalan"
     >
-      {/* Decorative background */}
       <div class="absolute inset-0 -z-10 pointer-events-none">
         <div class="absolute top-1/4 right-1/4 w-72 h-72 rounded-full bg-[#ff6b00]/5 blur-3xl" />
         <div class="absolute bottom-1/3 left-1/4 w-96 h-96 rounded-full bg-[#ff6b00]/3 blur-3xl" />
@@ -90,7 +89,6 @@ export default function Hero(props: Props) {
             }
           >
             <div class="relative">
-              {/* Decorative rings */}
               <div class="absolute inset-0 rounded-full ring-4 ring-[#ff6b00]/20 scale-110" />
               <div class="absolute inset-0 rounded-full ring-1 ring-[#ff6b00]/10 scale-125" />
               <LazyImg
@@ -103,7 +101,6 @@ export default function Hero(props: Props) {
         </div>
       </div>
 
-      {/* Scroll indicator */}
       <a
         href="#about"
         aria-label="Scroll ke bawah"

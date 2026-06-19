@@ -84,7 +84,6 @@ export default function About(props: Props) {
               </Show>
             </div>
 
-            {/* Contact info */}
             <div class="space-y-3">
               <p class="text-xs font-semibold uppercase tracking-widest text-[var(--c-text-muted)] mb-3">Informasi Kontak</p>
               <Show when={props.profile?.email}>

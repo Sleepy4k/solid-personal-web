@@ -31,7 +31,6 @@ export default function VolunteeringPage() {
   const q = () => searchParams.q ?? "";
   const selectedStatus = () => searchParams.status ?? "all";
 
-  // Debounced local search input state
   const [localSearch, setLocalSearch] = createSignal(q());
   createEffect(() => {
     setLocalSearch(q());
@@ -63,7 +62,6 @@ export default function VolunteeringPage() {
             </p>
           </div>
 
-          {/* Search + Filter */}
           <div class="flex flex-col sm:flex-row gap-3 mb-8">
             <div class="relative flex-1">
               <TbOutlineSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)]" size={16} />
@@ -89,7 +87,6 @@ export default function VolunteeringPage() {
             </div>
           </div>
 
-          {/* Results list */}
           <Suspense fallback={<VolunteeringSection loading />}>
             <Show
               when={(volunteerings() ?? []).length > 0}

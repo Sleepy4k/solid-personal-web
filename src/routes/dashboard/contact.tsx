@@ -43,7 +43,6 @@ export default function ContactPage() {
       <Meta name="robots" content="noindex, nofollow" />
 
       <div class="space-y-6">
-        {/* Page header */}
         <div class="flex items-center gap-3">
           <div class="p-2 bg-[#0ea5e9]/10 rounded-xl">
             <TbOutlineMail class="text-[#0ea5e9]" size={20} />
@@ -65,7 +64,6 @@ export default function ContactPage() {
               </div>
             }
           >
-            {/* Summary bar */}
             <div class="flex items-center gap-4 px-1">
               <p class="text-sm text-[var(--c-text-muted)]">
                 <span class="font-semibold text-[var(--c-text)]">{contacts()?.length ?? 0}</span> pesan total
@@ -83,9 +81,7 @@ export default function ContactPage() {
                 {contact => (
                   <Card>
                     <div class="p-5">
-                      {/* Header row */}
                       <div class="flex items-start gap-3">
-                        {/* Unread indicator + avatar */}
                         <div class="relative shrink-0">
                           <div class="size-10 rounded-full bg-[#0ea5e9]/10 flex items-center justify-center">
                             <TbOutlineUser class="text-[#0ea5e9]" size={18} />
@@ -95,7 +91,6 @@ export default function ContactPage() {
                           </Show>
                         </div>
 
-                        {/* Info */}
                         <div class="flex-1 min-w-0">
                           <div class="flex items-center gap-2 flex-wrap">
                             <p class="font-semibold text-[var(--c-text)] text-sm">{contact.name}</p>
@@ -113,7 +108,6 @@ export default function ContactPage() {
                           </div>
                         </div>
 
-                        {/* Actions */}
                         <div class="flex gap-1 shrink-0">
                           <button
                             onClick={() => toggleExpand(contact.id)}
@@ -136,13 +130,11 @@ export default function ContactPage() {
                         </div>
                       </div>
 
-                      {/* Subject */}
                       <div class="mt-3 flex items-center gap-2">
                         <TbOutlineMessageCircle size={12} class="text-[var(--c-text-muted)] shrink-0" />
                         <p class="text-sm font-medium text-[var(--c-text)] truncate">{contact.subject}</p>
                       </div>
 
-                      {/* Message preview / expanded */}
                       <Show
                         when={expanded() === contact.id}
                         fallback={

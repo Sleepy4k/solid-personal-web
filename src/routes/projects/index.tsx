@@ -35,7 +35,6 @@ export default function ProjectsPage() {
   const q = () => searchParams.q ?? "";
   const selectedTech = () => searchParams.tech ?? "all";
 
-  // Debounced local search input state
   const [localSearch, setLocalSearch] = createSignal(q());
   createEffect(() => {
     setLocalSearch(q());
@@ -45,7 +44,6 @@ export default function ProjectsPage() {
     setSearchParams({ q: val || undefined });
   }, 300);
 
-  // Map technologies to Option interface
   const techOptions = () => {
     const list = technologies() ?? [];
     return [
@@ -70,7 +68,6 @@ export default function ProjectsPage() {
             </p>
           </div>
 
-          {/* Search + Filter */}
           <div class="flex flex-col sm:flex-row gap-3 mb-8">
             <div class="relative flex-1">
               <TbOutlineSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)]" size={16} />
@@ -98,14 +95,12 @@ export default function ProjectsPage() {
             </div>
           </div>
 
-          {/* Results count */}
           <Suspense fallback={<Skeleton class="h-5 w-32 mb-4" />}>
             <p class="text-sm text-[var(--c-text-muted)] mb-6">
               {(projects() ?? []).length} proyek ditemukan
             </p>
           </Suspense>
 
-          {/* Project grid */}
           <Suspense
             fallback={
               <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">

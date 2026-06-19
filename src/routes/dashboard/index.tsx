@@ -34,7 +34,6 @@ export default function DashboardHome() {
       <Meta name="robots" content="noindex, nofollow" />
 
       <div class="space-y-8">
-        {/* Header */}
         <div class="flex items-start justify-between">
           <div>
             <h1 class="text-2xl font-bold text-[var(--c-text)]">Selamat Datang</h1>
@@ -46,7 +45,6 @@ export default function DashboardHome() {
           </div>
         </div>
 
-        {/* Stats */}
         <div>
           <p class="text-xs font-semibold uppercase tracking-widest text-[var(--c-text-muted)] mb-3">Ringkasan Konten</p>
           <Suspense
@@ -83,7 +81,6 @@ export default function DashboardHome() {
           </Suspense>
         </div>
 
-        {/* Quick links */}
         <div>
           <p class="text-xs font-semibold uppercase tracking-widest text-[var(--c-text-muted)] mb-3">Aksi Cepat</p>
           <div class="grid sm:grid-cols-3 gap-3">

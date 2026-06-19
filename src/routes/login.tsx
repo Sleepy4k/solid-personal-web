@@ -45,7 +45,7 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   name="password"
-                  placeholder="••••••••"
+                  placeholder="*********"
                   required
                   autocomplete="current-password"
                 />
@@ -63,7 +63,6 @@ export default function LoginPage() {
             </form>
           </div>
 
-          {/* Relocated Back to Home Link */}
           <div class="text-center mt-6">
             <A
               href="/"

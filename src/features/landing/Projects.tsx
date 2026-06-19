@@ -18,12 +18,6 @@ interface Props {
   showAll?: boolean;
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  IN_PROGRESS: "Dalam Pengerjaan",
-  COMPLETED: "Selesai",
-  ARCHIVED: "Diarsipkan"
-};
-
 export default function ProjectsSection(props: Props) {
   let sectionRef: HTMLElement | undefined;
 

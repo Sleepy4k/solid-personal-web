@@ -43,7 +43,6 @@ export default function ContactSection() {
         </div>
 
         <div class="grid md:grid-cols-5 gap-12">
-          {/* Info */}
           <div class="md:col-span-2 space-y-6">
             <div class="flex items-start gap-4">
               <div class="p-3 bg-[#ff6b00]/10 rounded-xl shrink-0">
@@ -74,7 +73,6 @@ export default function ContactSection() {
             </div>
           </div>
 
-          {/* Form */}
           <div class="md:col-span-3">
             <div class="bg-[var(--c-card)] rounded-[16px] border border-[var(--c-border)] shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-7">
               <Show
