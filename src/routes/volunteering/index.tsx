@@ -1,24 +1,19 @@
 import { createAsync, useSearchParams, type RouteDefinition } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
-import { Suspense, Show, createSignal, createEffect } from "solid-js";
+import { Suspense, For, Show, createSignal, createEffect } from "solid-js";
 import { getAllVolunteerings } from "~/server/db/portfolio";
 import Header from "~/components/shared/Header";
 import Footer from "~/components/shared/Footer";
-import VolunteeringSection from "~/features/landing/Volunteering";
-import { TbOutlineSearch } from "solid-icons/tb";
+import { Card } from "~/components/ui/Card";
+import { LazyImg } from "~/components/ui/LazyAsset";
 import { CustomSelect } from "~/components/form/CustomSelect";
+import { Skeleton } from "~/components/ui/Skeleton";
+import { TbOutlineSearch, TbOutlineMapPin, TbOutlineChevronRight } from "solid-icons/tb";
+import { debounce, formatDate } from "~/lib/shared/utils";
 
 export const route: RouteDefinition = {
   preload: () => getAllVolunteerings()
 };
-
-function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
-  let timer: any;
-  return function(this: any, ...args: Parameters<T>) {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn.apply(this, args), delay);
-  };
-}
 
 export default function VolunteeringPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -31,7 +26,7 @@ export default function VolunteeringPage() {
   const q = () => searchParams.q ?? "";
   const selectedStatus = () => searchParams.status ?? "all";
 
-  const [localSearch, setLocalSearch] = createSignal(q());
+  const [localSearch, setLocalSearch] = createSignal<string>(q());
   createEffect(() => {
     setLocalSearch(q());
   });
@@ -87,7 +82,19 @@ export default function VolunteeringPage() {
             </div>
           </div>
 
-          <Suspense fallback={<VolunteeringSection loading />}>
+          <Suspense fallback={<Skeleton class="h-5 w-32 mb-4" />}>
+            <p class="text-sm text-[var(--c-text-muted)] mb-6">
+              {(volunteerings() ?? []).length} kegiatan ditemukan
+            </p>
+          </Suspense>
+
+          <Suspense
+            fallback={
+              <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map(() => <Skeleton class="h-64 w-full rounded-[16px]" />)}
+              </div>
+            }
+          >
             <Show
               when={(volunteerings() ?? []).length > 0}
               fallback={
@@ -102,7 +109,74 @@ export default function VolunteeringPage() {
                 </div>
               }
             >
-              <VolunteeringSection items={volunteerings() ?? []} showAll />
+              <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6" role="list">
+                <For each={volunteerings()}>
+                  {vol => (
+                    <Card hover class="overflow-hidden h-full flex flex-col justify-between" role="listitem">
+                      <article class="p-5 flex flex-col h-full justify-between space-y-4">
+                        <div class="space-y-3">
+                          <div class="flex items-start gap-3">
+                            <Show
+                              when={vol.logo}
+                              fallback={
+                                <div class="size-12 rounded-lg bg-[var(--c-bg-alt)] border border-[var(--c-border)] shrink-0 flex items-center justify-center text-[var(--c-text-muted)] font-bold text-sm">
+                                  {vol.organization.slice(0, 2).toUpperCase()}
+                                </div>
+                              }
+                            >
+                              <LazyImg
+                                src={vol.logo?.path ?? ""}
+                                alt={`Logo ${vol.organization}`}
+                                class="size-12 rounded-lg object-contain bg-white border border-[var(--c-border)] p-1 shrink-0"
+                              />
+                            </Show>
+                            <div class="min-w-0">
+                              <h2 class="font-semibold text-[var(--c-text)] leading-snug truncate" title={vol.role}>{vol.role}</h2>
+                              <p class="text-[#ff6b00] text-sm font-medium truncate" title={vol.organization}>{vol.organization}</p>
+                            </div>
+                          </div>
+
+                          <div class="text-xs text-[var(--c-text-muted)] flex flex-col gap-1">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                              <span>{formatDate(vol.startDate)} - {formatDate(vol.endDate)}</span>
+                              <Show when={vol.current}>
+                                <span class="text-[10px] bg-[#ff6b00]/10 text-[#ff6b00] px-2 py-0.5 rounded-full font-medium">
+                                  Aktif
+                                </span>
+                              </Show>
+                            </div>
+                            <Show when={vol.location}>
+                              <span class="flex items-center gap-1">
+                                <TbOutlineMapPin size={12} />
+                                {vol.location}
+                              </span>
+                            </Show>
+                          </div>
+
+                          <Show when={vol.description}>
+                            <p class="text-sm text-[var(--c-text-muted)] leading-relaxed line-clamp-3">
+                              {vol.description}
+                            </p>
+                          </Show>
+
+                          <Show when={vol.impacts.length > 0}>
+                            <ul class="space-y-1" aria-label="Dampak">
+                              <For each={vol.impacts.slice(0, 2)}>
+                                {imp => (
+                                  <li class="text-xs text-[var(--c-text-muted)] flex items-start gap-1.5">
+                                    <TbOutlineChevronRight class="text-[#ff6b00] mt-0.5 shrink-0" size={12} />
+                                    <span class="line-clamp-2">{imp.description}</span>
+                                  </li>
+                                )}
+                              </For>
+                            </ul>
+                          </Show>
+                        </div>
+                      </article>
+                    </Card>
+                  )}
+                </For>
+              </div>
             </Show>
           </Suspense>
         </div>

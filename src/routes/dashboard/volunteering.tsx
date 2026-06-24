@@ -1,6 +1,6 @@
 import { createAsync, useAction, type RouteDefinition } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
-import { createSignal, For, Show, Suspense } from "solid-js";
+import { createSignal, For, Show, Suspense, Index } from "solid-js";
 import { getVolunteerings } from "~/server/db/dashboard";
 import { saveVolunteering, deleteVolunteering } from "~/server/actions/volunteering";
 import DashboardLayout from "~/features/dashboard/Layout";
@@ -73,26 +73,26 @@ function VolForm(props: { item?: Awaited<ReturnType<typeof getVolunteerings>>[nu
             <TbOutlinePlus size={13} />Tambah
           </Button>
         </div>
-        <For each={impacts()}>
+        <Index each={impacts()}>
           {(imp, i) => (
             <div class="flex gap-2 items-center">
               <TbOutlineChevronRight class="text-[#10b981] shrink-0" size={14} />
               <Input
                 placeholder="Membantu 200+ siswa belajar coding..."
-                value={imp}
-                onInput={e => setImpacts(x => x.map((v, j) => j === i() ? (e.target as HTMLInputElement).value : v))}
+                value={imp()}
+                onInput={e => setImpacts(x => x.map((v, j) => j === i ? (e.target as HTMLInputElement).value : v))}
               />
               <button
                 type="button"
                 class="text-[var(--c-text-muted)] hover:text-red-500 transition-colors shrink-0"
-                onClick={() => setImpacts(x => x.filter((_, j) => j !== i()))}
+                onClick={() => setImpacts(x => x.filter((_, j) => j !== i))}
                 aria-label="Hapus"
               >
                 <TbOutlineTrash size={15} />
               </button>
             </div>
           )}
-        </For>
+        </Index>
       </div>
 
       <div class="flex items-center gap-3 pt-2 border-t border-[var(--c-border)]">

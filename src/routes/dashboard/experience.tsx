@@ -1,6 +1,6 @@
 import { createAsync, useAction, type RouteDefinition } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
-import { createSignal, For, Show, Suspense } from "solid-js";
+import { createSignal, For, Show, Suspense, Index } from "solid-js";
 import { getExperiences } from "~/server/db/dashboard";
 import { saveExperience, deleteExperience } from "~/server/actions/experience";
 import DashboardLayout from "~/features/dashboard/Layout";
@@ -68,39 +68,63 @@ function ExpForm(props: { item?: Awaited<ReturnType<typeof getExperiences>>[numb
         <Textarea name="description" rows={3} placeholder="Deskripsi singkat peran dan tanggung jawab...">{props.item?.description ?? ""}</Textarea>
       </FormField>
 
-      {([
-        { label: "Tanggung Jawab", items: resps, setItems: setResps, placeholder: "Merancang arsitektur microservice..." },
-        { label: "Teknologi Digunakan", items: techs, setItems: setTechs, placeholder: "TypeScript, React, PostgreSQL..." }
-      ] as const).map(({ label, items, setItems, placeholder }) => (
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <p class="text-sm font-medium text-[var(--c-text)]">{label}</p>
-            <Button type="button" variant="ghost" class="text-xs gap-1" onClick={() => setItems(x => [...x, ""])}>
-              <TbOutlinePlus size={13} />Tambah
-            </Button>
-          </div>
-          <For each={items()}>
-            {(item, i) => (
-              <div class="flex gap-2 items-center">
-                <TbOutlineChevronRight class="text-[#ff6b00] shrink-0" size={14} />
-                <Input
-                  placeholder={placeholder}
-                  value={item}
-                  onInput={e => setItems(x => x.map((v, j) => j === i() ? (e.target as HTMLInputElement).value : v))}
-                />
-                <button
-                  type="button"
-                  class="text-[var(--c-text-muted)] hover:text-red-500 transition-colors shrink-0"
-                  onClick={() => setItems(x => x.filter((_, j) => j !== i()))}
-                  aria-label="Hapus"
-                >
-                  <TbOutlineTrash size={15} />
-                </button>
-              </div>
-            )}
-          </For>
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-medium text-[var(--c-text)]">Tanggung Jawab</p>
+          <Button type="button" variant="ghost" class="text-xs gap-1" onClick={() => setResps(x => [...x, ""])}>
+            <TbOutlinePlus size={13} />Tambah
+          </Button>
         </div>
-      ))}
+        <Index each={resps()}>
+          {(item, i) => (
+            <div class="flex gap-2 items-center">
+              <TbOutlineChevronRight class="text-[#ff6b00] shrink-0" size={14} />
+              <Input
+                placeholder="Merancang arsitektur microservice..."
+                value={item()}
+                onInput={e => setResps(x => x.map((v, j) => j === i ? (e.target as HTMLInputElement).value : v))}
+              />
+              <button
+                type="button"
+                class="text-[var(--c-text-muted)] hover:text-red-500 transition-colors shrink-0"
+                onClick={() => setResps(x => x.filter((_, j) => j !== i))}
+                aria-label="Hapus"
+              >
+                <TbOutlineTrash size={15} />
+              </button>
+            </div>
+          )}
+        </Index>
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-medium text-[var(--c-text)]">Teknologi Digunakan</p>
+          <Button type="button" variant="ghost" class="text-xs gap-1" onClick={() => setTechs(x => [...x, ""])}>
+            <TbOutlinePlus size={13} />Tambah
+          </Button>
+        </div>
+        <Index each={techs()}>
+          {(item, i) => (
+            <div class="flex gap-2 items-center">
+              <TbOutlineChevronRight class="text-[#ff6b00] shrink-0" size={14} />
+              <Input
+                placeholder="TypeScript, React, PostgreSQL..."
+                value={item()}
+                onInput={e => setTechs(x => x.map((v, j) => j === i ? (e.target as HTMLInputElement).value : v))}
+              />
+              <button
+                type="button"
+                class="text-[var(--c-text-muted)] hover:text-red-500 transition-colors shrink-0"
+                onClick={() => setTechs(x => x.filter((_, j) => j !== i))}
+                aria-label="Hapus"
+              >
+                <TbOutlineTrash size={15} />
+              </button>
+            </div>
+          )}
+        </Index>
+      </div>
 
       <div class="flex items-center gap-3 pt-2 border-t border-[var(--c-border)]">
         <Button type="submit" loading={status() === "saving"}>Simpan</Button>

@@ -134,8 +134,7 @@ export default function Sidebar() {
         onCancel={() => setConfirmLogout(false)}
         onConfirm={() => {
           setConfirmLogout(false);
-          const form = new FormData();
-          logout(form);
+          logout();
         }}
       />
     </>

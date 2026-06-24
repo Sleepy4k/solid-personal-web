@@ -37,7 +37,7 @@ export function CustomSelect(props: CustomSelectProps) {
       <button
         type="button"
         onClick={() => setIsOpen(open => !open)}
-        class="w-full pl-3 pr-10 py-2.5 text-sm border border-[var(--c-border)] rounded-[10px] bg-[var(--c-card)] text-[var(--c-text)] text-left focus:outline-none focus:border-[#ff6b00] focus:ring-2 focus:ring-[#ff6b00]/20 transition-all flex items-center justify-between cursor-pointer"
+        class="w-full pl-3 pr-3 py-2.5 text-sm border border-[var(--c-border)] rounded-[10px] bg-[var(--c-card)] text-[var(--c-text)] text-left focus:outline-none focus:border-[#ff6b00] focus:ring-2 focus:ring-[#ff6b00]/20 transition-all flex items-center justify-between cursor-pointer"
       >
         <span class="truncate">{selectedOption()?.label ?? props.placeholder}</span>
         <TbOutlineChevronDown

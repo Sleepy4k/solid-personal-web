@@ -6,6 +6,7 @@ import { saveProfile } from "~/server/actions/profile";
 import DashboardLayout from "~/features/dashboard/Layout";
 import FileUpload from "~/features/dashboard/FileUpload";
 import { FormField, Input, Textarea, Select, SaveStatus } from "~/components/form/FormField";
+import { CustomSelect } from "~/components/form/CustomSelect";
 import { Button } from "~/components/ui/Button";
 import { Skeleton } from "~/components/ui/Skeleton";
 import { TbOutlineUser, TbOutlinePlus, TbOutlineTrash } from "solid-icons/tb";
@@ -112,21 +113,22 @@ export default function ProfilePage() {
               <Index each={links()}>
                 {(link, i) => (
                   <div class="flex gap-2 items-start">
-                    <Select
+                    <CustomSelect
                       value={link().platform}
-                      onChange={e => setLinks(l => l.map((x, j) => j === i ? { ...x, platform: (e.target as HTMLSelectElement).value } : x))}
-                      class="w-36"
-                    >
-                      <option value="">Platform</option>
-                      <option value="github">GitHub</option>
-                      <option value="gitlab">GitLab</option>
-                      <option value="linkedin">LinkedIn</option>
-                      <option value="twitter">Twitter / X</option>
-                      <option value="instagram">Instagram</option>
-                      <option value="facebook">Facebook</option>
-                      <option value="youtube">YouTube</option>
-                      <option value="website">Website</option>
-                    </Select>
+                      options={[
+                        { value: "", label: "Platform" },
+                        { value: "github", label: "GitHub" },
+                        { value: "gitlab", label: "GitLab" },
+                        { value: "linkedin", label: "LinkedIn" },
+                        { value: "twitter", label: "Twitter / X" },
+                        { value: "instagram", label: "Instagram" },
+                        { value: "facebook", label: "Facebook" },
+                        { value: "youtube", label: "YouTube" },
+                        { value: "website", label: "Website" }
+                      ]}
+                      onChange={val => setLinks(l => l.map((x, j) => j === i ? { ...x, platform: val } : x))}
+                      class="w-36 shrink-0"
+                    />
                     <Input
                       placeholder="URL"
                       value={link().url}
