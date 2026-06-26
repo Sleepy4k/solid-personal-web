@@ -64,11 +64,7 @@ export default defineConfig(({ command, mode }) => {
     optimizeDeps: { exclude: ["nprogress"] },
     environments: {
       ssr: {
-        define: {
-          ...ssrDefine,
-          "import.meta.env.DEV": "false",
-          "import.meta.env.START_DEV_OVERLAY": "false",
-        },
+        define: ssrDefine,
         noExternal: ["nprogress"],
       },
     },
