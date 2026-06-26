@@ -63,11 +63,10 @@ export default defineConfig(({ command, mode }) => {
       }),
       tailwindcss(),
     ],
-    optimizeDeps: { exclude: ["nprogress"] },
+    optimizeDeps: { include: ["nprogress"] },
     environments: {
       ssr: {
         define: ssrDefine,
-        noExternal: ["nprogress"],
       },
     },
   };
