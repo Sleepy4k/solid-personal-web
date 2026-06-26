@@ -2,12 +2,13 @@ import { createAsync, type RouteDefinition } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
 import { Suspense, For } from "solid-js";
 import { getStats } from "~/server/db/dashboard";
+import { useProfileMeta, buildTitle, getProfileMeta } from "~/stores/profile";
 import { Skeleton } from "~/components/ui/Skeleton";
 import DashboardLayout from "~/features/dashboard/Layout";
 import { TbOutlineRocket, TbOutlineBriefcase, TbOutlineSchool, TbOutlineHeart, TbOutlinePhoto, TbOutlineExternalLink, TbOutlineArrowRight, TbOutlineUser, TbOutlineTrendingUp } from "solid-icons/tb";
 
 export const route: RouteDefinition = {
-  preload: () => getStats()
+  preload: () => { getStats(); getProfileMeta(); }
 };
 
 const STAT_CARDS = [
@@ -26,10 +27,11 @@ const QUICK_LINKS = [
 
 export default function DashboardHome() {
   const stats = createAsync(() => getStats());
+  const profile = useProfileMeta();
 
   return (
     <DashboardLayout>
-      <Title>Dashboard - Kelola Portfolio</Title>
+      <Title>{buildTitle("Dashboard", profile())}</Title>
       <Meta name="description" content="Dashboard admin untuk mengelola konten portfolio." />
       <Meta name="robots" content="noindex, nofollow" />
 

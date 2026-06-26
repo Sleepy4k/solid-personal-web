@@ -1,7 +1,7 @@
 "use server";
 import "dotenv/config";
 import { db } from "~/server/db/client";
-import type { GithubStats, ContribDay } from "~/lib/shared/types";
+import type { GithubStats, ContribDay } from "~/types";
 
 const GRAPHQL = "https://api.github.com/graphql";
 const CACHE_TTL = 24 * 60 * 60 * 1000;
@@ -22,8 +22,6 @@ const QUERY = `query($u:String!,$from:DateTime!,$to:DateTime!){
   }
 }`;
 
-// Builds a full Jan 1–Dec 31 week grid for `year`, filling future/missing
-// days with contributionCount = 0 so the calendar is always a constant shape.
 function buildFullYearCalendar(
   year: number,
   apiWeeks: { contributionDays: ContribDay[] }[]
@@ -42,7 +40,6 @@ function buildFullYearCalendar(
   const jan1 = new Date(year, 0, 1);
   const dec31 = new Date(year, 11, 31);
 
-  // Start from the Sunday on or before Jan 1
   const startSunday = new Date(jan1);
   startSunday.setDate(jan1.getDate() - jan1.getDay());
 
@@ -86,8 +83,6 @@ export async function getGithubStats(year?: number): Promise<GithubStats | null>
   }
 
   const from = new Date(targetYear, 0, 1);
-  // Cap `to` at today — GitHub API ignores future dates anyway but capping
-  // avoids any potential API rejection of future timestamps.
   const yearEnd = new Date(targetYear, 11, 31, 23, 59, 59);
   const to = yearEnd < now ? yearEnd : now;
 
@@ -136,7 +131,6 @@ export async function getGithubStats(year?: number): Promise<GithubStats | null>
       publicRepos: u.repositories?.totalCount ?? 0,
       totalContributions: cal?.totalContributions ?? 0,
       totalCommits: u.contributionsCollection?.totalCommitContributions ?? 0,
-      // Always a full Jan–Dec grid; future days have contributionCount = 0
       weeks: buildFullYearCalendar(targetYear, cal?.weeks ?? []),
       createdYear,
     };

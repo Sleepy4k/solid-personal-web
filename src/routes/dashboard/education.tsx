@@ -2,6 +2,7 @@ import { createAsync, useAction, type RouteDefinition } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
 import { createSignal, For, Show, Suspense, Index } from "solid-js";
 import { getEducations } from "~/server/db/dashboard";
+import { useProfileMeta, buildTitle, getProfileMeta } from "~/stores/profile";
 import { saveEducation, deleteEducation } from "~/server/actions/education";
 import DashboardLayout from "~/features/dashboard/Layout";
 import FileUpload from "~/features/dashboard/FileUpload";
@@ -12,7 +13,7 @@ import { SkeletonCard } from "~/components/ui/Skeleton";
 import { ConfirmModal } from "~/components/ui/ConfirmModal";
 import { TbOutlineSchool, TbOutlinePlus, TbOutlinePencil, TbOutlineTrash, TbOutlineChevronRight } from "solid-icons/tb";
 
-export const route: RouteDefinition = { preload: () => getEducations() };
+export const route: RouteDefinition = { preload: () => { getEducations(); getProfileMeta(); } };
 
 function EduForm(props: {
   item?: Awaited<ReturnType<typeof getEducations>>[number];
@@ -105,6 +106,7 @@ function EduForm(props: {
 }
 
 export default function EducationPage() {
+  const profile = useProfileMeta();
   const doDelete = useAction(deleteEducation);
   const [deleteId, setDeleteId] = createSignal<string | null>(null);
   const [deleting, setDeleting] = createSignal(false);
@@ -113,7 +115,7 @@ export default function EducationPage() {
 
   return (
     <DashboardLayout>
-      <Title>Pendidikan - Dashboard Portfolio</Title>
+      <Title>{buildTitle("Pendidikan", profile())}</Title>
       <Meta name="description" content="Kelola data pendidikan di portfolio." />
       <Meta name="robots" content="noindex, nofollow" />
 

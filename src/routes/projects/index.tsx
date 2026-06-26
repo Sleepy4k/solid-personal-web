@@ -1,7 +1,8 @@
-import { createAsync, useSearchParams, type RouteDefinition } from "@solidjs/router";
-import { Title, Meta } from "@solidjs/meta";
+import { createAsync, useSearchParams, useLocation, type RouteDefinition } from "@solidjs/router";
+import { Title, Meta, Link } from "@solidjs/meta";
 import { For, Show, Suspense, createSignal, createEffect } from "solid-js";
 import { getAllProjects, getAllTechnologies } from "~/server/db/portfolio";
+import { useProfileMeta, buildTitle, getProfileMeta } from "~/stores/profile";
 import Header from "~/components/shared/Header";
 import Footer from "~/components/shared/Footer";
 import { Card } from "~/components/ui/Card";
@@ -12,7 +13,7 @@ import { TbFillStar, TbOutlineExternalLink, TbFillBrandGithub, TbOutlineSearch }
 import { CustomSelect } from "~/components/form/CustomSelect";
 
 export const route: RouteDefinition = {
-  preload: () => { getAllProjects(); getAllTechnologies(); }
+  preload: () => { getAllProjects(); getAllTechnologies(); getProfileMeta(); }
 };
 
 function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
@@ -25,6 +26,15 @@ function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
 
 export default function ProjectsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const profile = useProfileMeta();
+  const location = useLocation();
+  const pageTitle = () => buildTitle("Semua Proyek", profile());
+  const description = () =>
+    `Daftar lengkap proyek ${profile()?.name ?? ""} — filter berdasarkan teknologi dan pencarian.`.trim();
+  const keywords = () =>
+    ["proyek", profile()?.name, profile()?.title, "portfolio", "developer", "Indonesia"]
+      .filter(Boolean).join(", ");
+  const ogImage = () => profile()?.avatar?.path;
   
   const projects = createAsync(() => getAllProjects({
     q: searchParams.q,
@@ -54,9 +64,22 @@ export default function ProjectsPage() {
 
   return (
     <>
-      <Title>Semua Proyek - Portfolio</Title>
-      <Meta name="description" content="Daftar lengkap proyek yang telah dikerjakan, dengan filter berdasarkan teknologi dan pencarian." />
+      <Title>{pageTitle()}</Title>
+      <Meta name="description" content={description()} />
+      <Meta name="keywords" content={keywords()} />
       <Meta name="robots" content="index, follow" />
+      <Meta property="og:type" content="website" />
+      <Meta property="og:title" content={pageTitle()} />
+      <Meta property="og:description" content={description()} />
+      <Meta property="og:locale" content="id_ID" />
+      <Show when={ogImage()}>
+        <Meta property="og:image" content={ogImage()!} />
+        <Meta name="twitter:image" content={ogImage()!} />
+      </Show>
+      <Meta name="twitter:card" content="summary_large_image" />
+      <Meta name="twitter:title" content={pageTitle()} />
+      <Meta name="twitter:description" content={description()} />
+      <Link rel="canonical" href={location.pathname} />
 
       <Header />
       <main id="main-content" class="min-h-screen pt-24 pb-20">

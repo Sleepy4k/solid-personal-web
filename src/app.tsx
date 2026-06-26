@@ -3,6 +3,7 @@ import { FileRoutes } from "@solidjs/start/router";
 import { MetaProvider } from "@solidjs/meta";
 import { Suspense, createEffect, createSignal, onMount } from "solid-js";
 import { useIsRouting } from "@solidjs/router";
+import { ProfileProvider } from "~/stores/providers";
 import "./app.css";
 
 function NavProgress() {
@@ -30,7 +31,7 @@ export default function App() {
     <MetaProvider>
       <Router
         root={(props) => (
-          <>
+          <ProfileProvider>
             <noscript>
               <div class="noscript-bio">
                 <h1 class="noscript-bio-name">Apri Pandu Wicaksono</h1>
@@ -56,7 +57,7 @@ export default function App() {
             </noscript>
             <NavProgress />
             <Suspense>{props.children}</Suspense>
-          </>
+          </ProfileProvider>
         )}
       >
         <FileRoutes />

@@ -3,6 +3,7 @@ import { ConfirmModal } from "~/components/ui/ConfirmModal";
 import { Title, Meta } from "@solidjs/meta";
 import { createSignal, For, Show, Suspense } from "solid-js";
 import { getContacts } from "~/server/db/contact";
+import { useProfileMeta, buildTitle, getProfileMeta } from "~/stores/profile";
 import { deleteContactAction, markContactReadAction } from "~/server/actions/contact";
 import DashboardLayout from "~/features/dashboard/Layout";
 import { Card } from "~/components/ui/Card";
@@ -12,7 +13,7 @@ import {
   TbOutlineUser, TbOutlineAt, TbOutlineClock, TbOutlineMessageCircle
 } from "solid-icons/tb";
 
-export const route: RouteDefinition = { preload: () => getContacts() };
+export const route: RouteDefinition = { preload: () => { getContacts(); getProfileMeta(); } };
 
 function formatDate(date: Date) {
   return new Date(date).toLocaleDateString("id-ID", {
@@ -25,6 +26,7 @@ function formatDate(date: Date) {
 }
 
 export default function ContactPage() {
+  const profile = useProfileMeta();
   const contacts = createAsync(() => getContacts());
   const markRead = useAction(markContactReadAction);
   const doDelete = useAction(deleteContactAction);
@@ -38,7 +40,7 @@ export default function ContactPage() {
 
   return (
     <DashboardLayout>
-      <Title>Pesan Masuk - Dashboard Portfolio</Title>
+      <Title>{buildTitle("Pesan Masuk", profile())}</Title>
       <Meta name="description" content="Lihat dan kelola pesan dari pengunjung portfolio." />
       <Meta name="robots" content="noindex, nofollow" />
 

@@ -132,3 +132,15 @@ export const getAllTechnologies = query(async () => {
   "use server";
   return db.technology.findMany({ orderBy: { name: "asc" } });
 }, "all-technologies");
+
+export const getProfileMeta = query(async () => {
+  "use server";
+  return db.profile.findFirst({
+    select: {
+      name: true,
+      title: true,
+      bio: true,
+      avatar: { select: { path: true } }
+    }
+  });
+}, "profile-meta");

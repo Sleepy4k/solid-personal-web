@@ -2,6 +2,7 @@ import { createAsync, useAction, type RouteDefinition } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
 import { createSignal, For, Show, Suspense, Index } from "solid-js";
 import { getProjects } from "~/server/db/dashboard";
+import { useProfileMeta, buildTitle, getProfileMeta } from "~/stores/profile";
 import { saveProject, deleteProject } from "~/server/actions/projects";
 import DashboardLayout from "~/features/dashboard/Layout";
 import FileUpload from "~/features/dashboard/FileUpload";
@@ -12,7 +13,7 @@ import { SkeletonCard } from "~/components/ui/Skeleton";
 import { ConfirmModal } from "~/components/ui/ConfirmModal";
 import { TbOutlineRocket, TbOutlinePlus, TbOutlinePencil, TbOutlineTrash, TbOutlineChevronRight, TbFillStar, TbOutlineExternalLink, TbFillBrandGithub } from "solid-icons/tb";
 
-export const route: RouteDefinition = { preload: () => getProjects() };
+export const route: RouteDefinition = { preload: () => { getProjects(); getProfileMeta(); } };
 
 const STATUS_LABELS: Record<string, string> = {
   COMPLETED: "Selesai",
@@ -118,6 +119,7 @@ function ProjectForm(props: { item?: Awaited<ReturnType<typeof getProjects>>[num
 }
 
 export default function ProjectsPage() {
+  const profile = useProfileMeta();
   const doDelete = useAction(deleteProject);
   const [deleteId, setDeleteId] = createSignal<string | null>(null);
   const [deleting, setDeleting] = createSignal(false);
@@ -126,7 +128,7 @@ export default function ProjectsPage() {
 
   return (
     <DashboardLayout>
-      <Title>Proyek - Dashboard Portfolio</Title>
+      <Title>{buildTitle("Proyek", profile())}</Title>
       <Meta name="description" content="Kelola daftar proyek di portfolio." />
       <Meta name="robots" content="noindex, nofollow" />
 

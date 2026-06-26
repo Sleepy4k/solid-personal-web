@@ -1,4 +1,4 @@
-import type { GithubStats } from "~/lib/shared/types";
+import type { GithubStats } from "~/types";
 import { getGithubStatsByYear } from "~/server/db/portfolio";
 import { Card } from "~/components/ui/Card";
 import { Skeleton } from "~/components/ui/Skeleton";

@@ -1,7 +1,8 @@
-import { createAsync, useSearchParams, type RouteDefinition } from "@solidjs/router";
-import { Title, Meta } from "@solidjs/meta";
+import { createAsync, useSearchParams, useLocation, type RouteDefinition } from "@solidjs/router";
+import { Title, Meta, Link } from "@solidjs/meta";
 import { Suspense, For, Show, createSignal, createEffect } from "solid-js";
 import { getAllVolunteerings } from "~/server/db/portfolio";
+import { useProfileMeta, buildTitle, getProfileMeta } from "~/stores/profile";
 import Header from "~/components/shared/Header";
 import Footer from "~/components/shared/Footer";
 import { Card } from "~/components/ui/Card";
@@ -12,11 +13,20 @@ import { TbOutlineSearch, TbOutlineMapPin, TbOutlineChevronRight } from "solid-i
 import { debounce, formatDate } from "~/lib/shared/utils";
 
 export const route: RouteDefinition = {
-  preload: () => getAllVolunteerings()
+  preload: () => { getAllVolunteerings(); getProfileMeta(); }
 };
 
 export default function VolunteeringPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const profile = useProfileMeta();
+  const location = useLocation();
+  const pageTitle = () => buildTitle("Riwayat Volunteering", profile());
+  const description = () =>
+    `Kegiatan volunteering dan kontribusi sosial ${profile()?.name ?? ""}.`.trim();
+  const keywords = () =>
+    ["volunteering", "organisasi", profile()?.name, profile()?.title, "portfolio"]
+      .filter(Boolean).join(", ");
+  const ogImage = () => profile()?.avatar?.path;
 
   const volunteerings = createAsync(() => getAllVolunteerings({
     q: searchParams.q,
@@ -43,9 +53,22 @@ export default function VolunteeringPage() {
 
   return (
     <>
-      <Title>Volunteering - Portfolio</Title>
-      <Meta name="description" content="Riwayat lengkap kegiatan volunteering dan kontribusi sosial yang telah dilakukan." />
+      <Title>{pageTitle()}</Title>
+      <Meta name="description" content={description()} />
+      <Meta name="keywords" content={keywords()} />
       <Meta name="robots" content="index, follow" />
+      <Meta property="og:type" content="website" />
+      <Meta property="og:title" content={pageTitle()} />
+      <Meta property="og:description" content={description()} />
+      <Meta property="og:locale" content="id_ID" />
+      <Show when={ogImage()}>
+        <Meta property="og:image" content={ogImage()!} />
+        <Meta name="twitter:image" content={ogImage()!} />
+      </Show>
+      <Meta name="twitter:card" content="summary_large_image" />
+      <Meta name="twitter:title" content={pageTitle()} />
+      <Meta name="twitter:description" content={description()} />
+      <Link rel="canonical" href={location.pathname} />
 
       <Header />
       <main id="main-content" class="min-h-screen pt-24 pb-20">

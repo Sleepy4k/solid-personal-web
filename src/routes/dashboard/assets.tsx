@@ -3,6 +3,7 @@ import { ConfirmModal } from "~/components/ui/ConfirmModal";
 import { Title, Meta } from "@solidjs/meta";
 import { createSignal, For, Show, Suspense } from "solid-js";
 import { getAssets } from "~/server/db/dashboard";
+import { useProfileMeta, buildTitle, getProfileMeta } from "~/stores/profile";
 import { uploadAssetAction, deleteAssetAction } from "~/server/actions/assets";
 import DashboardLayout from "~/features/dashboard/Layout";
 import { Card } from "~/components/ui/Card";
@@ -10,7 +11,7 @@ import { LazyImg } from "~/components/ui/LazyAsset";
 import { Skeleton } from "~/components/ui/Skeleton";
 import { TbOutlinePhoto, TbOutlineUpload, TbOutlineCopy, TbOutlineTrash, TbOutlineFileText, TbOutlineMovie, TbOutlineCheck } from "solid-icons/tb";
 
-export const route: RouteDefinition = { preload: () => getAssets() };
+export const route: RouteDefinition = { preload: () => { getAssets(); getProfileMeta(); } };
 
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -19,6 +20,7 @@ function formatSize(bytes: number) {
 }
 
 export default function AssetsPage() {
+  const profile = useProfileMeta();
   const assets = createAsync(() => getAssets());
   const upload = useAction(uploadAssetAction);
   const doDelete = useAction(deleteAssetAction);
@@ -54,7 +56,7 @@ export default function AssetsPage() {
 
   return (
     <DashboardLayout>
-      <Title>Asset Media - Dashboard Portfolio</Title>
+      <Title>{buildTitle("Asset Media", profile())}</Title>
       <Meta name="description" content="Kelola file dan asset media portfolio." />
       <Meta name="robots" content="noindex, nofollow" />
 

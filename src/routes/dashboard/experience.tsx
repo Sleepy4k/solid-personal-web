@@ -2,6 +2,7 @@ import { createAsync, useAction, type RouteDefinition } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
 import { createSignal, For, Show, Suspense, Index } from "solid-js";
 import { getExperiences } from "~/server/db/dashboard";
+import { useProfileMeta, buildTitle, getProfileMeta } from "~/stores/profile";
 import { saveExperience, deleteExperience } from "~/server/actions/experience";
 import DashboardLayout from "~/features/dashboard/Layout";
 import FileUpload from "~/features/dashboard/FileUpload";
@@ -12,7 +13,7 @@ import { SkeletonCard } from "~/components/ui/Skeleton";
 import { ConfirmModal } from "~/components/ui/ConfirmModal";
 import { TbOutlineBriefcase, TbOutlinePlus, TbOutlinePencil, TbOutlineTrash, TbOutlineChevronRight, TbOutlineMapPin } from "solid-icons/tb";
 
-export const route: RouteDefinition = { preload: () => getExperiences() };
+export const route: RouteDefinition = { preload: () => { getExperiences(); getProfileMeta(); } };
 
 function ExpForm(props: { item?: Awaited<ReturnType<typeof getExperiences>>[number]; onDone: () => void }) {
   const save = useAction(saveExperience);
@@ -136,6 +137,7 @@ function ExpForm(props: { item?: Awaited<ReturnType<typeof getExperiences>>[numb
 }
 
 export default function ExperiencePage() {
+  const profile = useProfileMeta();
   const doDelete = useAction(deleteExperience);
   const [deleteId, setDeleteId] = createSignal<string | null>(null);
   const [deleting, setDeleting] = createSignal(false);
@@ -144,7 +146,7 @@ export default function ExperiencePage() {
 
   return (
     <DashboardLayout>
-      <Title>Pengalaman Kerja - Dashboard Portfolio</Title>
+      <Title>{buildTitle("Pengalaman", profile())}</Title>
       <Meta name="description" content="Kelola data pengalaman kerja di portfolio." />
       <Meta name="robots" content="noindex, nofollow" />
 

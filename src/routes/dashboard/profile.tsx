@@ -1,5 +1,6 @@
 import { createAsync, useAction, type RouteDefinition } from "@solidjs/router";
 import { Title, Meta } from "@solidjs/meta";
+import { buildTitle } from "~/stores/profile";
 import { createSignal, Index, Suspense } from "solid-js";
 import { getProfile } from "~/server/db/dashboard";
 import { saveProfile } from "~/server/actions/profile";
@@ -44,7 +45,7 @@ export default function ProfilePage() {
 
   return (
     <DashboardLayout>
-      <Title>Profil - Dashboard Portfolio</Title>
+      <Title>{buildTitle("Profil", profile())}</Title>
       <Meta name="description" content="Edit profil dan informasi pribadi portfolio." />
       <Meta name="robots" content="noindex, nofollow" />
 
