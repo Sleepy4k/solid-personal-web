@@ -15,6 +15,7 @@ const SERVER_ENV_KEYS = [
 ] as const;
 
 export default defineConfig(({ command, mode }) => {
+  let definitions = {}
   const env = loadEnv(mode, process.cwd(), "");
   const ssrDefine = Object.fromEntries(
     SERVER_ENV_KEYS.map((key) => [
@@ -22,6 +23,13 @@ export default defineConfig(({ command, mode }) => {
       JSON.stringify(env[key] ?? process.env[key] ?? ""),
     ]),
   );
+
+  if (command === "build") {
+    definitions = {
+      "import.meta.env.DEV": "false",
+      "import.meta.env.START_DEV_OVERLAY": "false",
+    };
+  }
 
   return {
     server: {
@@ -47,13 +55,7 @@ export default defineConfig(({ command, mode }) => {
         mangle: true,
       },
     },
-    define:
-      command === "build"
-        ? {
-            "import.meta.env.DEV": "false",
-            "import.meta.env.START_DEV_OVERLAY": "false",
-          }
-        : {},
+    define: definitions,
     plugins: [
       solidStart({
         ssr: true,
