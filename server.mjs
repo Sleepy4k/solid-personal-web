@@ -2,10 +2,13 @@ import { sendNodeResponse, NodeRequest } from "srvx/node";
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { join, dirname, extname } from "node:path";
+import { join, dirname, extname, resolve } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CLIENT_DIR = join(__dirname, "dist/client");
+const UPLOAD_DIR = process.env.UPLOAD_DIR
+  ? resolve(process.env.UPLOAD_DIR)
+  : join(__dirname, "public", "uploads");
 const entryUrl = pathToFileURL(
   join(__dirname, "dist/server/entry-server.js"),
 ).href;
@@ -62,7 +65,34 @@ const server = createServer(async (req, res) => {
       return;
     }
   } catch {
-    // not a static file — fall through to SSR
+    // not a static file — fall through
+  }
+
+  // Serve dynamically-uploaded files from UPLOAD_DIR (not bundled into dist/client).
+  // Paths stored in DB are always /uploads/<filename> with no subdirectories.
+  if (pathname.startsWith("/uploads/")) {
+    const filename = pathname.slice("/uploads/".length);
+    // Reject empty names and any path traversal attempt
+    if (filename && !filename.includes("/") && !filename.includes("..")) {
+      const uploadPath = join(UPLOAD_DIR, filename);
+      try {
+        const info = await stat(uploadPath);
+        if (info.isFile()) {
+          const ext = extname(uploadPath).toLowerCase();
+          const mime = MIME[ext] ?? "application/octet-stream";
+          const data = await readFile(uploadPath);
+          res.writeHead(200, {
+            "Content-Type": mime,
+            "Content-Length": data.length,
+            "Cache-Control": "public, max-age=0, must-revalidate",
+          });
+          res.end(data);
+          return;
+        }
+      } catch {
+        // file not found — fall through to SSR (will 404)
+      }
+    }
   }
 
   res.setHeader("content-encoding", "identity");
