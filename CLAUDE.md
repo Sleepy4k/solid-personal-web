@@ -41,8 +41,9 @@ Server env vars are injected into SSR code via the `ssrDefine` block in `vite.co
 - Primary brand color: `#ff6b00`. CSS vars: `--c-bg`, `--c-bg-alt`, `--c-text`, `--c-text-muted`, `--c-border`.
 - Dark mode via `data-theme="dark"` attribute on `<html>`, toggled and persisted in localStorage.
 
-### Vite Config Pitfall — DO NOT regress
-In `vite.config.ts`, the `environments.ssr.define` block must NOT contain `"import.meta.env.DEV": "false"` or `"import.meta.env.START_DEV_OVERLAY": "false"`. Those values only belong in the top-level `define` block (already conditioned on `command === "build"`). Setting them unconditionally in the SSR environment definition causes SolidStart to think it's in production during `vite dev` and look for a Vite manifest file that doesn't exist, producing the error: `Error: No entry found in vite manifest for 'src/entry-client.tsx'`.
+### Vite Config Pitfalls — DO NOT regress
+- `environments.ssr.define` must NOT contain `"import.meta.env.DEV": "false"` or `"import.meta.env.START_DEV_OVERLAY": "false"`. Those values only belong in the top-level `define` block (already conditioned on `command === "build"`). Setting them unconditionally in the SSR environment definition causes SolidStart to think it's in production during `vite dev` and look for a Vite manifest file that doesn't exist, producing the error: `Error: No entry found in vite manifest for 'src/entry-client.tsx'`.
+- `optimizeDeps.exclude` must NOT include `"nprogress"`. NProgress is a CJS-only package; excluding it from Vite's pre-bundling causes the raw CJS file to be served without a default export, producing `SyntaxError: ... does not provide an export named 'default'`. Always keep `optimizeDeps: { include: ["nprogress"] }` and do NOT set `noExternal: ["nprogress"]` in the SSR environment.
 
 ### Data Layer
 - **Prisma 7** + `@prisma/adapter-mariadb` (requires `engineType = "library"` in `prisma/schema.prisma`).
@@ -75,7 +76,7 @@ In `vite.config.ts`, the `environments.ssr.define` block must NOT contain `"impo
 
 ### Routing
 - File-based routing (`@solidjs/start/router` + `FileRoutes`).
-- `/` — landing page; below-fold sections are `lazy()`-loaded.
+- `/` — landing page; preloads both `getPortfolioData()` and `getProfileMeta()`; below-fold sections are `lazy()`-loaded. Title reads from `useProfileMeta()` context, not from `data()?.profile`, to prevent hard-reload flash.
 - `/projects`, `/experience`, `/volunteering` — list pages with server-side debounced search and custom filter.
 - `/login` — admin login form.
 - `/dashboard/**` — 7 CRUD admin pages (guarded by middleware).
@@ -95,9 +96,26 @@ In `vite.config.ts`, the `environments.ssr.define` block must NOT contain `"impo
 - Do not use deprecated `cache`/`createRouteData` APIs — use `query`/`action` from `@solidjs/router`.
 
 ### GitHub Integration
-- `src/lib/server/github.ts`: Fetches contribution graph from the GitHub GraphQL API using `GITHUB_USERNAME` and `GITHUB_TOKEN`. Returns `GithubStats` type (defined in `src/lib/shared/types.ts`). Gracefully returns `null` if credentials are missing.
+- `src/lib/server/github.ts`: Fetches contribution graph from the GitHub GraphQL API using `GITHUB_USERNAME` and `GITHUB_TOKEN`. Returns `GithubStats` type (defined in `src/types/github.ts`). Gracefully returns `null` if credentials are missing.
 - Results are cached in the `GithubCache` Prisma model (keyed by username) to avoid repeated API calls.
 - `getGithubStatsByYear(year)` in `src/server/db/portfolio.ts` allows fetching per-year contribution data (used by the year selector in `GitHubStats.tsx`).
+
+### Global Stores (`src/stores/`)
+- **Context-based pattern**: Stores expose data via SolidJS `createContext` + Provider components in `providers.tsx`. This avoids module-level reactive state (which would cause SSR data leakage across users).
+- `src/stores/profile.ts`: `ProfileContext`, `useProfileMeta()`, `buildTitle(pageLabel, profile)`, `getProfileMeta` re-export.
+  - `getProfileMeta()` is a lightweight `query()` (name, title, bio, avatar only) — used in every page's `route.preload` to pre-warm the SSR query cache.
+  - `buildTitle("Semua Proyek", profile())` → `"Semua Proyek | Name - Title"` (falls back to `"Portfolio"` if no profile).
+- `src/stores/auth.ts`: `AuthContext`, `useSessionUser()` — stub for session-aware UI components. Wire up by adding an `AuthProvider` to `providers.tsx` when needed. **Do NOT use `await import("@solidjs/start/server")` inside a `query()` callback** — `getRequestEvent` comes back as `undefined` in SolidStart 2.x/Bun. Instead, access `event.locals.user` via middleware-set data in server actions.
+- `src/stores/providers.tsx`: `ProfileProvider` — context wrapper mounted once in `app.tsx`'s Router root. Ensures profile data is loaded once on app mount and shared across all route navigations (fixes client-nav title flash).
+- SEO pattern on every public page: `<Title>`, `<Meta name="description">`, `<Meta name="keywords">`, `og:*`, `twitter:*`, `<Link rel="canonical">`.
+- All pages call `getProfileMeta()` in their `route.preload`; SolidStart's query cache deduplicates — the provider's `createAsync` reads synchronously from this cache during SSR. **This is required even for the homepage** (which also calls `getPortfolioData()`). Without it, `ProfileProvider`'s `createAsync` has no cache to read on hydration and briefly returns `undefined`, flashing "Portfolio" as the title.
+
+### Types (`src/types/`)
+- All shared TypeScript types are centralized in `src/types/`.
+- `src/types/github.ts`: `GithubStats`, `ContribDay` interfaces for GitHub contribution data.
+- `src/types/index.ts`: Re-exports all types from sub-files.
+- `src/lib/shared/types.ts` has been deleted — all types now live in `src/types/` directly. Import from `~/types`.
+- Prisma model types (auto-generated) are available as `import type { Profile, Project, ... } from "@prisma/client"` — do not duplicate in `src/types/`.
 
 ## Full Source Tree
 
@@ -115,14 +133,13 @@ src/
       assets.ts       → uploadAsset/deleteAsset (file I/O + DB write, resolves upload dir dynamically)
       github.ts       → GitHub contributions GraphQL fetch ("use server" at file top)
     shared/
-      types.ts        → GithubStats, ContribDay, shared TS interfaces
       hashing.ts      → argon2id hashPassword / verifyPassword
       utils.ts        → shared pure helpers
       validation.ts   → shared Zod schemas (reused by actions)
   server/
     db/
       client.ts       → Prisma singleton with MariaDB adapter ("use server" at file top)
-      portfolio.ts    → getPortfolioData, getAllProjects, getAllExperiences, getAllVolunteerings, getAllTechnologies, getGithubStatsByYear
+      portfolio.ts    → getPortfolioData, getProfileMeta, getAllProjects, getAllExperiences, getAllVolunteerings, getAllTechnologies, getGithubStatsByYear
       dashboard.ts    → getStats, getProfile, getEducations, getProjects, getExperiences, getVolunteerings, getAssets
       contact.ts      → contact form queries
     actions/
@@ -160,9 +177,16 @@ src/
       volunteering.tsx → volunteering CRUD
       assets.tsx      → uploaded assets management
       contact.tsx     → contact form submissions
+  types/
+    github.ts         → ContribDay, GithubStats interfaces
+    index.ts          → re-exports all shared types
+  stores/
+    profile.ts        → ProfileContext, useProfileMeta(), buildTitle(), getProfileMeta
+    auth.ts           → AuthContext, useSessionUser() stub (wire up AuthProvider when needed)
+    providers.tsx     → ProfileProvider (context wrapper mounted in app.tsx)
   entry-client.tsx    → mount(<StartClient />, #app)
   entry-server.tsx    → createHandler(<StartServer document={...} />)
-  app.tsx             → Router + MetaProvider + NavProgress (NProgress on route change)
+  app.tsx             → Router + MetaProvider + ProfileProvider + NavProgress
   app.css             → Tailwind v4 @import + @theme design tokens + base styles
   global.d.ts         → RequestEventLocals augmentation (userId, user, cspNonce)
 ```
