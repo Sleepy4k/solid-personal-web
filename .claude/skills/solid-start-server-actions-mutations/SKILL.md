@@ -1,6 +1,6 @@
 ---
 name: solid-start-server-actions-mutations
-description: Mutate data with SolidStart actions - "use server" functions that authenticate, validate input, perform the write, and revalidate - treating every action as a public, untrusted endpoint.
+description: Mutate data with SolidStart actions - "use server" functions that authenticate via event.locals (set by middleware), validate input with Zod, perform the write, and revalidate - treating every action as a public, untrusted endpoint.
 related:
   - solid-start-solidstart-v2-features
   - solid-start-session-cookies
@@ -9,143 +9,187 @@ related:
 ---
 
 # SolidStart Server Actions & Mutations
-- Writes are `action(async (...) => { 'use server'; ... })` functions; the client gets an RPC stub, the code runs only on the server.
-- Every action authenticates the session, authorizes the user, and validates input with a schema before touching the database.
-- On success the action `revalidate`s affected queries so the UI reflects the change.
+- Writes are `action(async (form: FormData) => { 'use server'; ... }, 'name')` functions; the client gets an RPC stub, the code runs only on the server.
+- Auth context comes from `getRequestEvent()!.locals` (set by `adminAuthMW` middleware) — always check it, never trust client input for identity.
+- Every action validates input with Zod before touching the database.
+- On success the action calls `revalidate(queryFn.key)` so the UI reflects the change.
+
+## Auth via event.locals (middleware-first pattern)
+This project sets `event.locals.userId` and `event.locals.user` in `adminAuthMW` for all `/dashboard/**` requests. Actions inside dashboard routes verify the session by reading locals, not by re-hitting the DB:
+
+```ts
+import { getRequestEvent } from 'solid-js/web';
+const event = getRequestEvent()!;
+if (!event.locals.userId) throw redirect('/login');  // already verified by middleware, this is a belt+suspenders check
+```
+
+For actions accessible outside middleware-protected routes (e.g., login itself), do the full session lookup manually.
 
 ## Safety contract: non-negotiable
 - Abort if an action performs a write without verifying the session/role (it's a public endpoint anyone can POST to).
-- Abort if client input is used unvalidated (`db.delete(id)` with a raw id — IDOR / injection of arbitrary ids).
-- Abort if the action returns sensitive data or internal errors to the client (information disclosure).
-- Abort if a mutation doesn't `revalidate`/`reload` the relevant query (stale UI after the write).
+- Abort if client input is used unvalidated (IDOR / injection risk).
+- Abort if the action returns sensitive data (passwordHash, tokens) or internal error stacks to the client.
+- Abort if a mutation doesn't `revalidate` the relevant query (stale UI after write).
+- Abort if auth is only enforced in the UI (`<Show when={isAdmin}>`) but not inside the action.
 
 ## Required tools
-- `@solidjs/start` >= 1, `@solidjs/router` (`action`, `revalidate`, `redirect`), a schema validator, a session helper.
+- `@solidjs/start` >= 1, `@solidjs/router` (`action`, `revalidate`, `redirect`), Zod, `solid-js/web` (`getRequestEvent`).
 
 ## Gotchas
-- A `"use server"` action is reachable by direct HTTP request — never assume it's only called from your UI; re-check auth + input every time.
-- Throw `redirect('/login')` from an action to bounce unauthenticated users; throw a typed error for validation failures.
-- `revalidate(queryKey)` refreshes one cached read; `reload()` refreshes the route — pick the narrowest.
-- Actions integrate with `<form action={...}>` for progressive enhancement (works before JS hydration).
+- A `"use server"` action is reachable by direct HTTP POST — never assume it's called only from your UI.
+- `getRequestEvent()` is available inside `"use server"` function bodies during a request; it gives access to `locals`, `request`, and `response`.
+- `revalidate(queryFn.key)` refreshes one cached read; use the `.key` static property on the `query` function object.
+- `throw redirect('/login')` from an action bounces unauthenticated users; it must be thrown, not returned.
+- When using `useAction(myAction)` programmatically, build a `FormData` object and pass it; the action always receives `FormData`.
+- For pending state, use `useSubmission(myAction)` — it gives `.pending`, `.result`, `.error`.
 
 ## Workflow
-1. Define `action(async (form) => { 'use server'; ... })`.
-2. Load + verify the session/role; `redirect` if unauthorized.
-3. Validate input with a schema; perform the write.
-4. `revalidate` affected queries; return only what the client needs.
+1. Define `action(async (form: FormData) => { 'use server'; ... }, 'name')` in `src/server/actions/`.
+2. Check `getRequestEvent()!.locals.userId` (or do a full session lookup for non-middleware-protected routes).
+3. Parse and validate input with Zod.
+4. Perform the write.
+5. `return revalidate(affectedQuery.key)`.
+6. In the component, call via `useAction(myAction)` or `<form action={myAction}>`.
 
 ## Code Examples (Good vs Bad)
 
 ### Bad Example 1 (no auth, raw client input)
 ```ts
-export const deleteUser = action(async (id: string) => {
+export const deleteProject = action(async (form: FormData) => {
   'use server';
-  await db.user.delete({ where: { id } }); // anyone can delete any user id -> IDOR, no auth
+  await db.project.delete({ where: { id: String(form.get('id')) } }); // anyone can delete any id
 });
 ```
 
 ### Bad Example 2 (leaks internals, no revalidate)
 ```ts
-export const updateEmail = action(async (form: FormData) => {
+export const updateProfile = action(async (form: FormData) => {
   'use server';
-  try { await db.user.update({ data: { email: form.get('email') } }); } // unvalidated
-  catch (e) { return { error: e.stack }; }   // leaks stack trace; UI not revalidated
+  try { await db.profile.update({ data: { name: form.get('name') } }); } // unvalidated
+  catch (e) { return { error: e.stack }; }  // leaks stack trace; UI not revalidated
 });
 ```
 
-### Bad Example 3 (action returns sensitive fields)
-```ts
-export const getProfile = action(async (id: string) => {
-  'use server';
-  return db.user.findUnique({ where: { id } }); // ships passwordHash, resetToken, mfaSecret to the client
-});
-```
-
-### Bad Example 4 (write with no revalidate -> stale list)
-```ts
-export const addTodo = action(async (form: FormData) => {
-  'use server';
-  await db.todo.create({ data: { text: form.get('text') as string } });
-  // never revalidates listTodos -> the new row doesn't appear until a full reload
-});
-```
-
-### Bad Example 5 (authz only in the UI)
+### Bad Example 3 (auth only in UI)
 ```tsx
-export const deleteUser = action(async (form: FormData) => {
+export const deleteProject = action(async (form: FormData) => {
   'use server';
-  await db.user.delete({ where: { id: form.get('id') as string } }); // no server check
+  await db.project.delete({ where: { id: form.get('id') as string } }); // no server-side check
 });
-function Admin(props) {
-  return <Show when={props.user.isAdmin}><form action={deleteUser}><button>Delete</button></form></Show>;
-  // hiding the form is cosmetic — anyone can POST to the action directly
+function Admin() {
+  return <Show when={isLoggedIn()}><button onClick={() => doDelete(id)}>Delete</button></Show>;
+  // hiding the button is cosmetic — direct HTTP POST bypasses it
 }
 ```
 
-### Good Example 1 (auth + validate + write + revalidate)
+### Good Example 1 (auth via locals + Zod + revalidate — real project pattern)
 ```ts
-import { action, redirect, revalidate } from '@solidjs/router';
+// src/server/actions/projects.ts
+import { action, revalidate } from '@solidjs/router';
+import { getRequestEvent } from 'solid-js/web';
 import { z } from 'zod';
-const schema = z.object({ id: z.string().uuid() });
-export const deleteUser = action(async (form: FormData) => {
+import { db } from '~/server/db/client';
+import { getProjects } from '~/server/db/dashboard';
+
+const deleteSchema = z.object({ id: z.string().min(1) });
+
+export const deleteProject = action(async (form: FormData) => {
   'use server';
-  const session = await getSession();
-  if (!session?.isAdmin) throw redirect('/login');          // authz
-  const { id } = schema.parse(Object.fromEntries(form));    // validate
-  await db.user.delete({ where: { id } });
-  return revalidate(listUsers.key);                         // refresh the list
-});
+  const event = getRequestEvent()!;
+  if (!event.locals.userId) throw redirect('/login');  // belt+suspenders; middleware already checked
+
+  const { id } = deleteSchema.parse(Object.fromEntries(form));
+  await db.project.delete({ where: { id } });
+  return revalidate(getProjects.key);
+}, 'delete-project');
 ```
 
-### Good Example 2 (progressive-enhancement form)
+### Good Example 2 (upsert with full validation)
+```ts
+export const saveProject = action(async (form: FormData) => {
+  'use server';
+  if (!getRequestEvent()!.locals.userId) throw redirect('/login');
+
+  const id = String(form.get('id') ?? '');
+  const techs = JSON.parse(String(form.get('techs') ?? '[]')) as string[];
+  const data = {
+    title: String(form.get('title') ?? ''),
+    featured: form.get('featured') === 'true',
+    order: Number(form.get('order') ?? 0),
+    status: z.enum(['IN_PROGRESS', 'COMPLETED', 'ARCHIVED']).parse(form.get('status')),
+  };
+  z.object({ title: z.string().min(1), order: z.number().int() }).parse(data);
+
+  let projId = id;
+  if (id) {
+    await db.project.update({ where: { id }, data });
+  } else {
+    const created = await db.project.create({ data });
+    projId = created.id;
+  }
+  // sync junction table
+  await db.projectTechnology.deleteMany({ where: { projectId: projId } });
+  for (const name of techs.filter(Boolean)) {
+    const tech = await db.technology.upsert({ where: { name }, create: { name }, update: {} });
+    await db.projectTechnology.upsert({
+      where: { projectId_technologyId: { projectId: projId, technologyId: tech.id } },
+      create: { projectId: projId, technologyId: tech.id },
+      update: {},
+    });
+  }
+  return revalidate(getProjects.key);
+}, 'save-project');
+```
+
+### Good Example 3 (programmatic submission with useAction)
 ```tsx
-import { useSubmission } from '@solidjs/router';
-function DeleteButton(props) {
-  const submission = useSubmission(deleteUser);
+// src/routes/dashboard/projects.tsx
+function DeleteButton(props: { id: string }) {
+  const doDelete = useAction(deleteProject);
+  const [loading, setLoading] = createSignal(false);
   return (
-    <form action={deleteUser} method="post">
-      <input type="hidden" name="id" value={props.id} />
-      <button disabled={submission.pending}>Delete</button>   {/* works without JS */}
-    </form>
+    <button disabled={loading()} onClick={async () => {
+      setLoading(true);
+      const form = new FormData();
+      form.set('id', props.id);
+      await doDelete(form);
+      setLoading(false);
+    }}>
+      Hapus
+    </button>
   );
 }
 ```
 
-### Good Example 3 (return only what the client needs)
+### Good Example 4 (login action — full session lookup, no locals)
 ```ts
-export const getProfile = action(async (id: string) => {
+// src/server/actions/auth.ts — outside middleware-protected zone
+export const loginAction = action(async (form: FormData) => {
   'use server';
-  const session = await getSession();
-  if (session.data.userId !== id) throw redirect('/login');     // own profile only
-  const u = await db.user.findUnique({ where: { id } });
-  return { id: u.id, name: u.name, email: u.email };            // no secrets in the payload
-});
+  const email = String(form.get('email') ?? '').trim();
+  const password = String(form.get('password') ?? '');
+  if (!email || !password) return { error: 'Email dan password wajib diisi' };
+
+  const user = await db.user.findUnique({ where: { email } });
+  if (!user || !(await verifyPassword(password, user.password))) {
+    return { error: 'Email atau password salah' };
+  }
+  const { token, expiresAt } = await createSession(user.id);
+  getRequestEvent()!.response.headers.set('Set-Cookie', sessionCookie(token, expiresAt));
+  throw redirect('/dashboard');
+}, 'login');
 ```
 
-### Good Example 4 (pending state via useSubmission)
+### Good Example 5 (pending state via useSubmission)
 ```tsx
-import { useSubmission } from '@solidjs/router';
-function AddTodo() {
-  const sub = useSubmission(addTodo);
+function SaveButton(props: { action: typeof saveProject }) {
+  const sub = useSubmission(props.action);
   return (
-    <form action={addTodo} method="post">
-      <input name="text" required />
-      <button disabled={sub.pending}>{sub.pending ? 'Saving…' : 'Add'}</button>
-    </form>
+    <Button type="submit" loading={sub.pending}>
+      {sub.pending ? 'Menyimpan...' : 'Simpan'}
+    </Button>
   );
 }
-```
-
-### Good Example 5 (typed validation error returned to the UI)
-```ts
-const schema = z.object({ email: z.string().email() });
-export const updateEmail = action(async (form: FormData) => {
-  'use server';
-  const parsed = schema.safeParse(Object.fromEntries(form));
-  if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }; // typed, safe
-  await db.user.update({ where: { id: await currentUserId() }, data: parsed.data });
-  return revalidate(getProfile.key);
-});
 ```
 
 ## Related skills
@@ -153,3 +197,4 @@ export const updateEmail = action(async (form: FormData) => {
 - [[solid-start-session-cookies]] — the session an action authenticates against.
 - [[solid-start-security-hardening]] — treating actions as untrusted endpoints.
 - [[solid-start-optimistic-ui-updates]] — reflecting the mutation instantly.
+- [[solid-start-middleware]] — how event.locals.userId is set before actions run.
