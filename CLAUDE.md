@@ -27,6 +27,7 @@ Copy `.env.example` to `.env` and configure:
 - `JWT_SECRET`: HS256 key (min 32 chars)
 - `ADMIN_EMAIL` / `ADMIN_PASSWORD`: Admin login credentials
 - `GITHUB_USERNAME` / `GITHUB_TOKEN`: Credentials for contributions API (optional)
+- `UPLOAD_DIR`: Absolute path for uploaded files (optional; defaults to `public/uploads`)
 
 Server env vars are injected into SSR code via the `ssrDefine` block in `vite.config.ts` using `process.env.*` defines — this is required because Nitro/Bun can lose `process.env` at runtime without it.
 
@@ -82,8 +83,8 @@ In `vite.config.ts`, the `environments.ssr.define` block must NOT contain `"impo
 - Route preloading: `export const route: RouteDefinition = { preload: () => getXxx() }` in each page file.
 
 ### File Uploads
-- `uploadAssetAction` in `src/server/actions/assets.ts`.
-- Files written to `public/uploads/` via Node `fs.writeFile()`. `/uploads/**` route cached immutably.
+- `src/server/actions/assets.ts`: `uploadAssetAction` / `deleteAssetAction` (form actions); `uploadAssetFn` (plain server function used by `FileUpload.tsx` for direct programmatic calls).
+- `src/lib/server/assets.ts`: Handles file I/O and DB write. Always writes to `public/uploads/`; override with `UPLOAD_DIR` env var.
 - Assets tracked in the `Asset` Prisma model; referenced by other models via `coverId`, `logoId`, etc.
 
 ### Data Patterns
@@ -95,6 +96,8 @@ In `vite.config.ts`, the `environments.ssr.define` block must NOT contain `"impo
 
 ### GitHub Integration
 - `src/lib/server/github.ts`: Fetches contribution graph from the GitHub GraphQL API using `GITHUB_USERNAME` and `GITHUB_TOKEN`. Returns `GithubStats` type (defined in `src/lib/shared/types.ts`). Gracefully returns `null` if credentials are missing.
+- Results are cached in the `GithubCache` Prisma model (keyed by username) to avoid repeated API calls.
+- `getGithubStatsByYear(year)` in `src/server/db/portfolio.ts` allows fetching per-year contribution data (used by the year selector in `GitHubStats.tsx`).
 
 ## Full Source Tree
 
@@ -109,7 +112,7 @@ src/
       nprogress.ts    → NProgress config (browser-only)
     server/
       session.ts      → JWT create/verify, DB session CRUD, cookie helpers ("use server" at file top)
-      assets.ts       → server-side asset path helpers
+      assets.ts       → uploadAsset/deleteAsset (file I/O + DB write, resolves upload dir dynamically)
       github.ts       → GitHub contributions GraphQL fetch ("use server" at file top)
     shared/
       types.ts        → GithubStats, ContribDay, shared TS interfaces
@@ -119,7 +122,7 @@ src/
   server/
     db/
       client.ts       → Prisma singleton with MariaDB adapter ("use server" at file top)
-      portfolio.ts    → getPortfolioData, getAllProjects, getAllExperiences, getAllVolunteerings, getAllTechnologies
+      portfolio.ts    → getPortfolioData, getAllProjects, getAllExperiences, getAllVolunteerings, getAllTechnologies, getGithubStatsByYear
       dashboard.ts    → getStats, getProfile, getEducations, getProjects, getExperiences, getVolunteerings, getAssets
       contact.ts      → contact form queries
     actions/
@@ -129,7 +132,7 @@ src/
       projects.ts     → saveProject, deleteProject
       experience.ts   → saveExperience, deleteExperience
       volunteering.ts → saveVolunteering, deleteVolunteering
-      assets.ts       → uploadAssetAction, deleteAssetAction
+      assets.ts       → uploadAssetFn (direct), uploadAssetAction, deleteAssetAction
       contact.ts      → submitContactAction
   features/
     landing/          → section components used only on the homepage
