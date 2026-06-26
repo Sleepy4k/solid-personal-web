@@ -226,6 +226,51 @@ input[type="month"] {
 
 [data-theme="dark"] .contrib-0 { background: #2d333b; }
 
+.noscript-bio {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.noscript-bio-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--c-text);
+  margin-bottom: 8px;
+}
+
+.noscript-bio-text {
+  font-size: 0.875rem;
+  color: var(--c-text-muted);
+  line-height: 1.5;
+}
+
+.noscript-banner {
+  background-color: var(--c-primary);
+  color: white;
+  padding: 12px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+}
+
+.contrib-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(53, minmax(10px, 1fr));
+  gap: 4px;
+}
+
+.contrib-week-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .gsap-hidden {
   opacity: 0;
   transform: translateY(30px);

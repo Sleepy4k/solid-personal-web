@@ -14,8 +14,7 @@ export function SkeletonText(props: { lines?: number; class?: string }) {
     <div class={`space-y-2 ${props.class ?? ""}`} aria-hidden="true">
       {Array.from({ length: props.lines ?? 3 }).map((_, i) => (
         <Skeleton
-          class="h-4"
-          style={{ width: i === (props.lines ?? 3) - 1 ? "60%" : "100%" }}
+          class={`h-4 ${i === (props.lines ?? 3) - 1 ? "w-3/5" : "w-full"}`}
         />
       ))}
     </div>

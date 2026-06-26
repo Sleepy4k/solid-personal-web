@@ -3,18 +3,10 @@ import { unlink, mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { db } from "~/server/db/client";
-import { existsSync } from "node:fs";
 
-function resolveUploadDir(): string {
-  if (process.env.UPLOAD_DIR) {
-    return resolve(process.env.UPLOAD_DIR);
-  }
-  const prodClientDir = join(process.cwd(), "dist", "client");
-  const baseDir = existsSync(prodClientDir) ? prodClientDir : join(process.cwd(), "public");
-  return join(baseDir, "uploads");
-}
-
-const UPLOAD_DIR = resolveUploadDir();
+const UPLOAD_DIR = process.env.UPLOAD_DIR
+  ? resolve(process.env.UPLOAD_DIR)
+  : join(process.cwd(), "public", "uploads");
 
 let isDirCreated = false;
 

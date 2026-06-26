@@ -2,6 +2,13 @@ import { action, revalidate } from "@solidjs/router";
 import { uploadAsset, deleteAsset } from "~/lib/server/assets";
 import { getAssets } from "~/server/db/dashboard";
 
+export async function uploadAssetFn(form: FormData) {
+  "use server";
+  const file = form.get("file");
+  if (!(file instanceof File)) throw new Error("File tidak ditemukan");
+  return uploadAsset(file);
+}
+
 export const uploadAssetAction = action(async (form: FormData) => {
   "use server";
   const file = form.get("file");

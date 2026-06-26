@@ -11,11 +11,11 @@ export const route: RouteDefinition = {
 };
 
 const STAT_CARDS = [
-  { label: "Proyek", key: "projects" as const, href: "/dashboard/projects", Icon: TbOutlineRocket, color: "#ff6b00" },
-  { label: "Pengalaman", key: "experiences" as const, href: "/dashboard/experience", Icon: TbOutlineBriefcase, color: "#6366f1" },
-  { label: "Pendidikan", key: "educations" as const, href: "/dashboard/education", Icon: TbOutlineSchool, color: "#0ea5e9" },
-  { label: "Volunteering", key: "volunteerings" as const, href: "/dashboard/volunteering", Icon: TbOutlineHeart, color: "#10b981" },
-  { label: "Asset", key: "assets" as const, href: "/dashboard/assets", Icon: TbOutlinePhoto, color: "#f59e0b" }
+  { label: "Proyek", key: "projects" as const, href: "/dashboard/projects", Icon: TbOutlineRocket, bgClass: "bg-[#ff6b00]/10", colorClass: "text-[#ff6b00]" },
+  { label: "Pengalaman", key: "experiences" as const, href: "/dashboard/experience", Icon: TbOutlineBriefcase, bgClass: "bg-[#6366f1]/10", colorClass: "text-[#6366f1]" },
+  { label: "Pendidikan", key: "educations" as const, href: "/dashboard/education", Icon: TbOutlineSchool, bgClass: "bg-[#0ea5e9]/10", colorClass: "text-[#0ea5e9]" },
+  { label: "Volunteering", key: "volunteerings" as const, href: "/dashboard/volunteering", Icon: TbOutlineHeart, bgClass: "bg-[#10b981]/10", colorClass: "text-[#10b981]" },
+  { label: "Asset", key: "assets" as const, href: "/dashboard/assets", Icon: TbOutlinePhoto, bgClass: "bg-[#f59e0b]/10", colorClass: "text-[#f59e0b]" }
 ];
 
 const QUICK_LINKS = [
@@ -65,11 +65,8 @@ export default function DashboardHome() {
                       href={card.href}
                       class="group block bg-[var(--c-card)] rounded-[16px] border border-[var(--c-border)] p-4 hover:border-[#ff6b00]/40 hover:shadow-md transition-all duration-200 no-underline"
                     >
-                      <div
-                        class="size-9 rounded-xl flex items-center justify-center mb-3"
-                        style={{ "background-color": `${card.color}15` }}
-                      >
-                        <CardIcon size={18} style={{ color: card.color }} aria-hidden="true" />
+                      <div class={`size-9 rounded-xl flex items-center justify-center mb-3 ${card.bgClass}`}>
+                        <CardIcon size={18} class={card.colorClass} aria-hidden="true" />
                       </div>
                       <p class="text-2xl font-bold text-[var(--c-text)]">{stats()?.[card.key] ?? 0}</p>
                       <p class="text-xs text-[var(--c-text-muted)] mt-0.5">{card.label}</p>

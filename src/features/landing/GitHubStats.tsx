@@ -35,7 +35,6 @@ function formatDateString(dateStr: string) {
   });
 }
 
-// Returns a Map<colIndex, monthAbbr> for columns that start a new month
 function getMonthStartLabels(weeks: GithubStats["weeks"]): Map<number, string> {
   const map = new Map<number, string>();
   let lastMonth = -1;
@@ -186,7 +185,6 @@ export default function GitHubStatsSection(props: Props) {
             }
           >
             <div class="space-y-5">
-              {/* ── Stat cards ── */}
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <For each={STAT_ITEMS()}>
                   {(stat) => {
@@ -217,7 +215,6 @@ export default function GitHubStatsSection(props: Props) {
                 </For>
               </div>
 
-              {/* ── Contribution calendar card ── */}
               <Card class="overflow-hidden">
                 {/* Header */}
                 <div class="px-5 pt-5 pb-4 border-b border-[var(--c-border)] flex items-start gap-4 flex-wrap sm:flex-nowrap">
@@ -240,7 +237,6 @@ export default function GitHubStatsSection(props: Props) {
                     </Show>
                   </div>
 
-                  {/* Year selector — plain list with scrollbar, no search */}
                   <div class="w-full sm:w-28 flex-shrink-0">
                     <CustomSelect
                       value={selectedYearStr()}
@@ -250,36 +246,19 @@ export default function GitHubStatsSection(props: Props) {
                   </div>
                 </div>
 
-                {/* Calendar body — horizontal scroll on mobile */}
                 <div class="px-5 py-5 overflow-x-auto scrollbar-none">
                   <Show
                     when={!yearLoading()}
                     fallback={
                       <div>
                         <div class="h-4 w-20 bg-[var(--c-border)] rounded animate-pulse mb-2" />
-                        <div
-                          style={{
-                            display: "grid",
-                            "grid-template-columns":
-                              "repeat(53, minmax(10px, 1fr))",
-                            gap: "4px",
-                          }}
-                        >
+                        <div class="contrib-skeleton-grid">
                           <For each={Array(53).fill(null)}>
                             {() => (
-                              <div
-                                style={{
-                                  display: "flex",
-                                  "flex-direction": "column",
-                                  gap: "4px",
-                                }}
-                              >
+                              <div class="contrib-week-col">
                                 <For each={Array(7).fill(null)}>
                                   {() => (
-                                    <div
-                                      class="contrib-0 animate-pulse rounded-sm"
-                                      style={{ "aspect-ratio": "1/1" }}
-                                    />
+                                    <div class="contrib-0 animate-pulse rounded-sm aspect-square" />
                                   )}
                                 </For>
                               </div>
@@ -290,7 +269,6 @@ export default function GitHubStatsSection(props: Props) {
                     }
                   >
                     <div class="relative w-full">
-                      {/* Month label row — same grid structure as calendar */}
                       <Show when={monthStartLabels().size > 0}>
                         <div
                           class="w-full mb-1"
@@ -311,8 +289,6 @@ export default function GitHubStatsSection(props: Props) {
                         </div>
                       </Show>
 
-                      {/* Contribution grid — full width, minmax ensures cells
-                          expand to fill the card on large screens */}
                       <div
                         class="w-full"
                         style={{
@@ -326,18 +302,11 @@ export default function GitHubStatsSection(props: Props) {
                       >
                         <For each={calendarWeeks()}>
                           {(week) => (
-                            <div
-                              style={{
-                                display: "flex",
-                                "flex-direction": "column",
-                                gap: "4px",
-                              }}
-                            >
+                            <div class="contrib-week-col">
                               <For each={week.contributionDays}>
                                 {(day) => (
                                   <div
-                                    class={`${contribClass(day.contributionCount)} rounded-sm transition-transform duration-100 hover:scale-110 cursor-pointer`}
-                                    style={{ "aspect-ratio": "1/1" }}
+                                    class={`${contribClass(day.contributionCount)} rounded-sm transition-transform duration-100 hover:scale-110 cursor-pointer aspect-square`}
                                     onMouseEnter={(e) => {
                                       const rect =
                                         e.currentTarget.getBoundingClientRect();
@@ -357,7 +326,6 @@ export default function GitHubStatsSection(props: Props) {
                         </For>
                       </div>
 
-                      {/* Legend */}
                       <div class="flex items-center gap-2 mt-3 text-xs text-[var(--c-text-muted)]">
                         <span>Sedikit</span>
                         {(
@@ -385,16 +353,11 @@ export default function GitHubStatsSection(props: Props) {
         </Show>
       </div>
 
-      {/* Tooltip — fixed to viewport so it renders above all stacking contexts */}
       <Show when={hoveredDay()}>
         {(day) => (
           <div
-            class="fixed z-[9999] bg-slate-950 text-white text-[10px] px-2.5 py-1.5 rounded-lg shadow-xl pointer-events-none flex flex-col items-center border border-slate-800"
-            style={{
-              left: `${day().vx}px`,
-              top: `${day().vy}px`,
-              transform: "translate(-50%, -100%)",
-            }}
+            class="fixed z-[9999] bg-slate-950 text-white text-[10px] px-2.5 py-1.5 rounded-lg shadow-xl pointer-events-none flex flex-col items-center border border-slate-800 -translate-x-1/2 -translate-y-full"
+            style={{ left: `${day().vx}px`, top: `${day().vy}px` }}
           >
             <span class="font-bold text-[#ff6b00]">
               {day().count} kontribusi
