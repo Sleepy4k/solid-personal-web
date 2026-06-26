@@ -55,12 +55,18 @@ export default function Header() {
         class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between"
         aria-label="Navigasi utama"
       >
-        <A href="/" class="font-bold text-xl text-[var(--c-text)] hover:text-[#ff6b00] transition-colors">
+        <A
+          href="/"
+          class="font-bold text-xl text-[var(--c-text)] hover:text-[#ff6b00] transition-colors"
+        >
           Portfolio
         </A>
 
-        <ul class="hidden md:flex items-center gap-6 list-none m-0 p-0" role="list">
-          {NAV.map(item => (
+        <ul
+          class="hidden md:flex items-center gap-6 list-none m-0 p-0"
+          role="list"
+        >
+          {NAV.map((item) => (
             <li>
               <A
                 href={item.href}
@@ -75,16 +81,30 @@ export default function Header() {
         <div class="flex items-center gap-2">
           <button
             onClick={toggleTheme}
-            aria-label={theme() === "dark" ? "Aktifkan mode terang" : "Aktifkan mode gelap"}
+            aria-label={
+              theme() === "dark"
+                ? "Aktifkan mode terang"
+                : "Aktifkan mode gelap"
+            }
             class="p-2 rounded-full text-[var(--c-text-muted)] hover:text-[#ff6b00] hover:bg-[#ff6b00]/10 transition-colors"
           >
-            <Show when={theme() === "dark"} fallback={<TbOutlineMoon size={18} />}>
+            <Show
+              when={theme() === "dark"}
+              fallback={<TbOutlineMoon size={18} />}
+            >
               <TbOutlineSun size={18} />
             </Show>
           </button>
 
+          <A
+            href="/#contact"
+            class="hidden md:inline-flex bg-[#ff6b00] text-white text-sm font-medium px-4 py-2 rounded-[12px] hover:bg-[#e55a00] transition-colors"
+          >
+            Hubungi Saya
+          </A>
+
           <button
-            onClick={() => setMenuOpen(o => !o)}
+            onClick={() => setMenuOpen((o) => !o)}
             aria-label={menuOpen() ? "Tutup menu" : "Buka menu"}
             aria-expanded={menuOpen()}
             class="md:hidden p-2 rounded-lg text-[var(--c-text-muted)] hover:text-[#ff6b00] hover:bg-[#ff6b00]/10 transition-colors"
@@ -101,7 +121,7 @@ export default function Header() {
           class="md:hidden border-t border-[var(--c-border)] bg-[var(--c-bg)] px-4 py-4 space-y-1"
           role="menu"
         >
-          {NAV.map(item => (
+          {NAV.map((item) => (
             <A
               href={item.href}
               onClick={() => setMenuOpen(false)}
