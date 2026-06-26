@@ -2,6 +2,11 @@ import { query } from "@solidjs/router";
 import { db } from "~/server/db/client";
 import { getGithubStats } from "~/lib/server/github";
 
+export const getGithubStatsByYear = query(async (year: number) => {
+  "use server";
+  return getGithubStats(year);
+}, "github-stats-year");
+
 export const getPortfolioData = query(async () => {
   "use server";
   const [profile, educations, experiences, projects, volunteerings, githubStats] =

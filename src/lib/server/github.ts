@@ -1,14 +1,14 @@
 "use server";
 import "dotenv/config";
 import { db } from "~/server/db/client";
-import type { GithubStats } from "~/lib/shared/types";
+import type { GithubStats, ContribDay } from "~/lib/shared/types";
 
 const GRAPHQL = "https://api.github.com/graphql";
 const CACHE_TTL = 24 * 60 * 60 * 1000;
 
 const QUERY = `query($u:String!,$from:DateTime!,$to:DateTime!){
   user(login:$u){
-    name bio
+    name bio createdAt
     followers{totalCount}
     following{totalCount}
     repositories(ownerAffiliations:OWNER,privacy:PUBLIC){totalCount}
@@ -22,17 +22,74 @@ const QUERY = `query($u:String!,$from:DateTime!,$to:DateTime!){
   }
 }`;
 
-export async function getGithubStats(): Promise<GithubStats | null> {
+// Builds a full Jan 1–Dec 31 week grid for `year`, filling future/missing
+// days with contributionCount = 0 so the calendar is always a constant shape.
+function buildFullYearCalendar(
+  year: number,
+  apiWeeks: { contributionDays: ContribDay[] }[]
+): GithubStats["weeks"] {
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+
+  const dataMap = new Map<string, number>();
+  for (const week of apiWeeks) {
+    for (const day of week.contributionDays) {
+      dataMap.set(day.date, day.contributionCount);
+    }
+  }
+
+  const result: GithubStats["weeks"] = [];
+  const jan1 = new Date(year, 0, 1);
+  const dec31 = new Date(year, 11, 31);
+
+  // Start from the Sunday on or before Jan 1
+  const startSunday = new Date(jan1);
+  startSunday.setDate(jan1.getDate() - jan1.getDay());
+
+  const cur = new Date(startSunday);
+  while (cur <= dec31) {
+    const days: ContribDay[] = [];
+    for (let d = 0; d < 7; d++) {
+      const day = new Date(cur);
+      day.setDate(cur.getDate() + d);
+      const y = day.getFullYear();
+      const m = String(day.getMonth() + 1).padStart(2, "0");
+      const dd = String(day.getDate()).padStart(2, "0");
+      const dateStr = `${y}-${m}-${dd}`;
+      const inTargetYear = y === year;
+      const isFuture = day > today;
+      days.push({
+        date: dateStr,
+        contributionCount:
+          inTargetYear && !isFuture ? (dataMap.get(dateStr) ?? 0) : 0,
+        weekday: d,
+      });
+    }
+    result.push({ contributionDays: days });
+    cur.setDate(cur.getDate() + 7);
+  }
+
+  return result;
+}
+
+export async function getGithubStats(year?: number): Promise<GithubStats | null> {
   const username = process.env.GITHUB_USERNAME;
   if (!username) return null;
 
-  const cached = await db.githubCache.findUnique({ where: { username } });
+  const now = new Date();
+  const targetYear = year ?? now.getFullYear();
+  const cacheKey = `${username}:${targetYear}`;
+
+  const cached = await db.githubCache.findUnique({ where: { username: cacheKey } });
   if (cached && Date.now() - cached.fetchedAt.getTime() < CACHE_TTL) {
     return cached.data as unknown as GithubStats;
   }
 
-  const now = new Date();
-  const from = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+  const from = new Date(targetYear, 0, 1);
+  // Cap `to` at today — GitHub API ignores future dates anyway but capping
+  // avoids any potential API rejection of future timestamps.
+  const yearEnd = new Date(targetYear, 11, 31, 23, 59, 59);
+  const to = yearEnd < now ? yearEnd : now;
 
   try {
     const res = await fetch(GRAPHQL, {
@@ -44,7 +101,7 @@ export async function getGithubStats(): Promise<GithubStats | null> {
       },
       body: JSON.stringify({
         query: QUERY,
-        variables: { u: username, from: from.toISOString(), to: now.toISOString() }
+        variables: { u: username, from: from.toISOString(), to: to.toISOString() }
       })
     });
 
@@ -67,6 +124,9 @@ export async function getGithubStats(): Promise<GithubStats | null> {
     }
 
     const cal = u.contributionsCollection?.contributionCalendar;
+    const createdYear = u.createdAt
+      ? new Date(u.createdAt).getFullYear()
+      : now.getFullYear() - 2;
 
     const stats: GithubStats = {
       name: u.name ?? username,
@@ -76,12 +136,14 @@ export async function getGithubStats(): Promise<GithubStats | null> {
       publicRepos: u.repositories?.totalCount ?? 0,
       totalContributions: cal?.totalContributions ?? 0,
       totalCommits: u.contributionsCollection?.totalCommitContributions ?? 0,
-      weeks: cal?.weeks ?? []
+      // Always a full Jan–Dec grid; future days have contributionCount = 0
+      weeks: buildFullYearCalendar(targetYear, cal?.weeks ?? []),
+      createdYear,
     };
 
     await db.githubCache.upsert({
-      where: { username },
-      create: { username, data: stats as unknown as object, fetchedAt: now },
+      where: { username: cacheKey },
+      create: { username: cacheKey, data: stats as unknown as object, fetchedAt: now },
       update: { data: stats as unknown as object, fetchedAt: now }
     });
 

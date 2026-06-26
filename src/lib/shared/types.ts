@@ -13,4 +13,5 @@ export interface GithubStats {
   totalContributions: number;
   totalCommits: number;
   weeks: { contributionDays: ContribDay[] }[];
+  createdYear: number;
 }

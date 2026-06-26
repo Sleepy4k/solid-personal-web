@@ -215,6 +215,9 @@ input[type="month"] {
   100% { background-position: -200% 0; }
 }
 
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
 .contrib-0 { background: #ebedf0; }
 .contrib-1 { background: #ffd4b3; }
 .contrib-2 { background: #ffb380; }
