@@ -26,16 +26,16 @@ src/
   lib/
     client/            → kode browser-only (NProgress)
     server/            → kode server-only: session, assets, github
-    shared/            → tipe TypeScript + Zod validation schemas
+    shared/            → shared helpers + Zod validation schemas
   server/
     db/
       client.ts        → Prisma singleton dengan @prisma/adapter-mariadb
-      portfolio.ts     → query data landing page (3 terbaru per kategori) + pencarian server-side
+      portfolio.ts     → query data landing page + pencarian server-side
       dashboard.ts     → query-query halaman dashboard
       contact.ts       → query data pesan kontak
     actions/           → semua server action (mutasi database) dengan Zod validation
   features/
-    landing/           → section homepage (Hero, About, Experience, Projects, Volunteering, Contact)
+    landing/           → section homepage (Hero, About, Education, Experience, Projects, Volunteering, GitHubStats, Contact)
     dashboard/         → komponen dashboard (Layout, Sidebar, FileUpload)
   components/
     ui/                → Button, Card, Skeleton, LazyAsset, ConfirmModal
@@ -43,11 +43,20 @@ src/
     shared/            → Header (dark mode toggle), Footer, ScrollToTop
   routes/
     index.tsx          → halaman utama portfolio (lazy loaded sections dengan ambient gradient)
-    login.tsx          → login admin (relocated back-to-portfolio link)
+    login.tsx          → login admin
+    [...404].tsx       → 404 catch-all
     projects/index.tsx → halaman semua proyek + server-side debounced search & custom select
-    experience/index.tsx → halaman semua pengalaman kerja + server-side debounced search & custom select
-    volunteering/index.tsx → halaman semua kegiatan volunteering + server-side debounced search & custom select
+    experience/index.tsx → halaman semua pengalaman kerja + server-side debounced search
+    volunteering/index.tsx → halaman semua kegiatan volunteering + server-side debounced search
     dashboard/         → 8 halaman CRUD (profile, education, experience, projects, volunteering, assets, contact)
+  stores/
+    profile.ts         → ProfileContext, useProfileMeta(), buildTitle()
+    auth.ts            → AuthContext, useSessionUser() stub
+    providers.tsx      → ProfileProvider (context wrapper di app.tsx)
+  types/
+    github.ts          → ContribDay, GithubStats interfaces
+    index.ts           → re-export semua shared types
+server.mjs             → production HTTP server (melayani dist/client + uploads dari UPLOAD_DIR)
 ```
 
 ## Setup
@@ -66,6 +75,7 @@ ADMIN_EMAIL="email@anda.com"
 ADMIN_PASSWORD="password-kuat"
 GITHUB_USERNAME="username-github"        # opsional
 GITHUB_TOKEN="ghp_yourtoken"            # opsional, untuk statistik kontribusi
+UPLOAD_DIR="/var/www/portfolio/uploads"  # opsional; default: public/uploads di root project
 ```
 
 ### 2. Install dependencies
@@ -90,10 +100,52 @@ bun run build       # production build
 bun run start       # production server
 ```
 
+## Deploy ke Linux Production
+
+SolidStart membangun output statis ke `dist/client/` dan SSR ke `dist/server/`. `server.mjs` melayani keduanya. File upload disimpan di luar `dist/` agar tidak terhapus saat redeploy.
+
+### Alur upload file
+
+```
+Upload via dashboard  →  server action  →  UPLOAD_DIR
+                                           (default: <project-root>/public/uploads/)
+Browser request /uploads/<file>  →  server.mjs  →  baca dari UPLOAD_DIR
+```
+
+**Penting**: Jangan arahkan `UPLOAD_DIR` ke `dist/client/uploads/` karena folder `dist/` dihapus setiap build. Gunakan path absolut di luar project, misalnya `/var/www/portfolio/uploads`.
+
+### Contoh systemd service
+
+```ini
+[Unit]
+Description=Portfolio SolidStart
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/portfolio
+ExecStart=/usr/bin/bun run server.mjs
+Restart=on-failure
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=UPLOAD_DIR=/var/www/portfolio/uploads
+EnvironmentFile=/var/www/portfolio/.env
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Buat folder upload dan pastikan writable oleh user service:
+
+```bash
+mkdir -p /var/www/portfolio/uploads
+chown -R www-data:www-data /var/www/portfolio/uploads
+```
+
 ## Fitur
 
 ### Portfolio Publik
-- **SEO lengkap**: meta tag per halaman, JSON-LD Person schema, og:type, twitter:card
+- **SEO lengkap**: meta tag per halaman, og:type, twitter:card, canonical URL
 - **Dark mode**: toggle cahaya/gelap, disimpan ke localStorage, tanpa flash saat load
 - **GSAP animations**: animasi scroll-triggered di semua section landing
 - **Code splitting**: lazy loading untuk section below-fold (Experience, Projects, dll)
@@ -101,24 +153,24 @@ bun run start       # production server
 - **Scroll to top**: tombol muncul setelah scroll 400px
 - **Contact form**: pesan dari visitor tersimpan di database, divalidasi Zod
 - **Halaman detail**: `/projects`, `/experience`, `/volunteering` dengan data lengkap
-- **Server-side Search & Filter**: pencarian debounced (300ms) dan filter dropdown kustom (`CustomSelect`) diolah langsung oleh server/database untuk performa maksimal.
+- **Server-side Search & Filter**: pencarian debounced (300ms) dan filter dropdown kustom (`CustomSelect`) diolah langsung oleh server/database untuk performa maksimal
 - **Responsive**: mobile-first, mobile hamburger header
-- **Ambient Glow**: Gradien latar belakang bergaya premium dengan pendaran cahaya oranye lembut (`#ff6b00`) yang dinamis menyesuaikan mode gelap/terang.
+- **Ambient Glow**: gradien latar belakang bergaya premium dengan pendaran cahaya oranye lembut (`#ff6b00`) yang dinamis menyesuaikan mode gelap/terang
 
 ### Dashboard Admin
 - **CRUD penuh**: Profil, Pendidikan, Pengalaman, Proyek, Volunteering, Asset, dan Pesan Masuk
-- **Upload file**: `uploadAssetAction` server action, `fs.writeFile()`, validasi tipe/ukuran
-- **Solid Icons**: Ikon modern dan konsisten menggunakan library `solid-icons/tb`
+- **Upload file**: `uploadAssetAction` server action, `fs.writeFile()`, validasi tipe/ukuran, max 10MB
+- **Solid Icons**: ikon modern dan konsisten menggunakan library `solid-icons/tb`
 - **Mobile sidebar**: drawer halus dengan animasi transisi CSS (`transform` & `opacity`)
-- **Full-width & Statik Sidebar**: Tata letak desktop didesain lebar penuh (full-width) dengan sidebar statik (tinggi tidak mengikuti konten utama) agar navigasi tetap kokoh.
-- **Confirm Modal**: Dialog konfirmasi kustom (`ConfirmModal`) yang responsif dan berkinerja tinggi untuk semua aksi penghapusan data dan logout.
+- **Full-width & Statik Sidebar**: tata letak desktop didesain lebar penuh dengan sidebar statik agar navigasi tetap kokoh
+- **Confirm Modal**: dialog konfirmasi kustom (`ConfirmModal`) untuk semua aksi penghapusan data dan logout
 
 ### Keamanan
 - **Server actions only**: tidak ada API route publik, semua mutasi via `action()`
 - **Zod validation**: validasi di layer server action, bukan hanya client
 - **CSP**: `Content-Security-Policy` dengan `'unsafe-inline'` (kompatibel SolidStart hydration)
 - **HttpOnly cookie**: sesi JWT tidak bisa diakses JavaScript
-- **argon2id**: hashing password dengan memory cost tinggi
+- **argon2id**: hashing password dengan memory cost tinggi (64MB)
 
 ## Perintah Database
 
@@ -136,5 +188,7 @@ bun run db:studio     # buka Prisma Studio di browser
 - **SolidStart v2 alpha**: konfigurasi di `vite.config.ts`, bukan `app.config.ts`.
 - **Middleware**: registrasi path `./src/middleware/index.ts` di `vite.config.ts`.
 - **Password hashing**: `argon2` (bukan `Bun.password`) — type `argon2id`, memoryCost 64MB.
-- **File upload**: `uploadAsset()` di `~/lib/server/assets`, simpan ke `public/uploads/`.
+- **File upload**: `uploadAsset()` di `~/lib/server/assets.ts` tulis ke `UPLOAD_DIR` (default `public/uploads/`). `server.mjs` melayani `/uploads/<file>` langsung dari `UPLOAD_DIR` — tidak bergantung pada `dist/client/`.
 - **Tailwind v4**: variabel CSS custom via `@theme {}` di `app.css`, bukan `tailwind.config.js`.
+- **Global stores**: `ProfileProvider` di `app.tsx` menyediakan data profil ke seluruh route via context; menghindari flash judul pada client-side navigation.
+- **Query deduplication**: setiap page memanggil `getProfileMeta()` di `route.preload`; SolidStart query cache men-deduplikasi agar tidak ada request ganda.
