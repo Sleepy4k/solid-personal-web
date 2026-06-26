@@ -13,6 +13,14 @@ related:
 - Type and size are validated (sniffed, not just the client-declared MIME), and a random server-generated name is used.
 - Files go to object storage (S3/R2) or outside the web root; large transfers are streamed, not buffered whole.
 
+## Project pattern (this repo)
+- Files written to `public/uploads/` (or `UPLOAD_DIR` env override) via Node `fs.writeFile()`.
+- `src/lib/server/assets.ts` handles file I/O and DB write (`Asset` Prisma model).
+- `src/server/actions/assets.ts` exposes two surface areas:
+  - `uploadAssetFn(form)` — plain `"use server"` function for programmatic calls (used by `FileUpload.tsx`).
+  - `uploadAssetAction` / `deleteAssetAction` — `action()` wrappers for form submissions; both call `revalidate(getAssets.key)`.
+- Validation: MIME-type allowlist (`image/*`, `video/mp4`, `video/webm`, `application/pdf`) + 10 MB size cap.
+
 ## Safety contract: non-negotiable
 - Abort if the client-supplied filename/extension/MIME is trusted for the storage path or validation (path traversal, content spoof).
 - Abort if there's no size limit (a huge upload exhausts memory/disk — DoS).
